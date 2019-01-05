@@ -1,0 +1,5 @@
+[{
+    "key": "f6",
+    "command": "workbench.action.tasks.Buildrun",
+    "when": "editorTextFocus"
+}]

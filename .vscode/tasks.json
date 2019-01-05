@@ -1,0 +1,68 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // Building with makefiles using the GNU compiler collection / gcc
+            "label": "Build - x64 gcc",
+            "type": "shell",
+            "command": "cd build/x64-gcc && cmake ../.. -G \"Unix Makefiles\" && make && cd ../..",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            // Don't scan the task output, vscode can do fancy things with what processes return but we don't need any of it
+            "problemMatcher": []
+        },
+        {
+            // Build a Visual Studio 2015 project/MSVC
+            // TODO: Figure out how to just run this from here
+            "label": "Build - x64 vs proj",
+            "type": "shell",
+            "command": "cd build/x64-vs && cmake ../.. -G \"Visual Studio 15 2017 Win64\" && cd ../..",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            // Same as above mofo
+            "problemMatcher": []
+        },
+
+        {
+            // Building with the power of belief, basically. This shoouullldd ideally pick a generator on its own, if you don't have gcc or vs, but I haven't tried it. Tell me if it blows up.
+            // You might have to call something else instead of make btw - probably actually
+            // The executable will still be x64-other folder, but you can change this if you need, although this is probably useless
+            "label": "Build - x64 jesus",
+            "type": "shell",
+            "command": "cd build/x64-other && cmake ../.. && make && cd ../..",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            // Don't scan the task output, vscode can do fancy things with what processes return but we don't need any of it
+            "problemMatcher": []
+        },
+
+        //
+        // Running stuff
+        //
+        {
+            // I think these ones are obvious? A bit?
+            "label": "Run - available x64-gcc binary",
+            "type": "shell",
+            "command": "cd build/x64-gcc && hello.exe hello && cd ../..",
+        },
+        {
+            "label": "Build & Run - x64 gcc",
+            "type": "shell",
+            "command": "cd build/x64-gcc && cmake ../.. -G \"Unix Makefiles\" && make && hello.exe hello && cd ../..",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run - available other binary",
+            "type": "shell",
+            "command": "cd build/x64-other && hello.exe hello && cd ../..",
+        }
+    ]
+}
