@@ -4,6 +4,24 @@
 class Function{
 public:
     void call(){
+        
+        // Brackets
+            // Search for pairs of ()
+            // Make new function objects out of those and call them
+
+        // Powers
+            // Search for ^
+            // Do the jab
+        
+        sin() -> sinFunc
+        std::pair<string, std::function<>> key = std::make_pair("(", [](){
+            blah blah
+        }; // what we're searching for, and the thing to do with it
+        // Division
+            // Search for /
+
+        // Multiply
+            // Search for *
         for(int i = 0; i < 11; i++){
             switch(op[i]){
                 case '*':
@@ -12,7 +30,7 @@ public:
                     float right = ReadNum(i);
                     std::cout << "RIGHT OF MULTPIPLY:" << right << '\n';
 
-                    val = left * right;
+                    val = left + right;
                     std::cout << "VALUE: " << (int)val;
             }
         }
@@ -71,15 +89,14 @@ public:
             std::swap(str[i], str[n - i - 1]); 
     } 
 
-               //     0123456789
-    std::string op = "595959*1937,";
+    std::string op = "595959*1937*7,"; // -> "18372712483*7" -> put back in function class -> "857327581098"
     float val = 0;
 };
 
-    
 int main()
 {
-    Function f;
+    Function f; Function g;
+    
     f.call();
     return EXIT_SUCCESS;
 }
