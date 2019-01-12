@@ -1,12 +1,15 @@
 #include "function.hpp"
 
-Function::Function(std::string operation){
-    constOp = operation;
-
-    // TODO: Sort log
-
-    if(_debugLevel >= logLevels::TRACE){
-        std::cout << "[FUNCTION]: Init w/ constOp{" << constOp << "}\n";
+Function::Function(const char* const operation) : source(operation) {
+    unsigned int elemsPlaced = 0;
+    for(int i = 0; i < (int)len; i++){
+        for(unsigned int elemIterator = 0; elemIterator < nElemTypes; elemIterator++){
+            if(std::pair<int, Element> scan = Element<elemIterator>.check(i, &operation)){
+                func[elemsPlaced] = scan.second; elemsPlaced++;
+                i += scan.first - 1; // Jump to next symbol, take one because loop adds one anyways
+                break;
+            }
+        }
     }
 }
 
