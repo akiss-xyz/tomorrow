@@ -8,7 +8,7 @@
 #include "image.hpp"
 
 // TODO: Adding still doesn't work
-// TODO: Compile faster wtf
+// TODO: Compile faster 
 
 int main()
 {   
@@ -40,12 +40,12 @@ int main()
     std::cout << xVal.toString() << '\n';
     std::cout << xVal.call(std::map<char,float>({ {'x', 4} })) << '\n';
 
-	Function polynomial("13.254*x^3+2*x^2-13*x+15/2");
-	std::cout << polynomial.toString() << '\n';
-	std::cout << polynomial.call(std::map<char, float>({ {'x', -1.27197529f} })) << '\n';
+	  Function polynomial("13.254*x^3+2*x^2-13*x+15/2");
+  	std::cout << polynomial.toString() << '\n';
+	  std::cout << polynomial.call(std::map<char, float>({ {'x', -1.27197529f} })) << '\n';
 
-	Function _3dequation("x/2+y/3");
-	std::cout << _3dequation.toString() << '\n';
-	std::cout << _3dequation.call(std::map<char, float>({ {'x', 2}, {'y', 3} })) << '\n';
+	  Function _3dequation("x/2+y/3");
+  	std::cout << _3dequation.toString() << '\n';
+  	std::cout << _3dequation.call(std::map<char, float>({ {'x', 2}, {'y', 3} })) << '\n';
     return EXIT_SUCCESS;
 }
