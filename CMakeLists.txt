@@ -5,6 +5,7 @@ set (CMAKE_CXX_STANDARD 17)
 project(hello) # project name, for now
 
 
+
 include_directories(include) # where our header files go - you can read up on these or ask me about them. probs best to do both.
 file(GLOB_RECURSE SOURCES src/*.cpp) # recursively search our src folder for c++ files
 
@@ -16,7 +17,8 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     # Just for testing, so we know what compiler we're using
     add_compile_definitions(GCC)
     # Adding some compiler flags - we want as many errors and suggestions and information from the compiler as possible
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+    # Added nounusused parameter because honestly wth
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter")
 endif()
 if ( MSVC )
     # Once again, just so we know what's good

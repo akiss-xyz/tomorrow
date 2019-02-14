@@ -5,16 +5,14 @@
 
 class Image {
 public:
-    const unsigned int xSize = 60;
-    const unsigned int ySize = 45;
-    const unsigned int zSize = 1;
-    const unsigned int nColourChannels = 3;
+    const unsigned int xSize;
+    const unsigned int ySize;
+    const unsigned int zSize;
+    const unsigned int nColourChannels;
 
     cimg::CImg<unsigned char>* image;
 
-private:
-public:
-    Image(unsigned int xSize, unsigned int ySize, unsigned int zSize, unsigned int nColourChannels);
+    Image(unsigned int xSize = 60, unsigned int ySize = 60, unsigned int zSize = 60, unsigned int nColourChannels = 1);
 
     // unused param: unsigned int padding
     // TODO: Styles and scale, maybe check out the drawaxes func in cimg?

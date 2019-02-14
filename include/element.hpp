@@ -1,98 +1,215 @@
 #pragma once
 
 #include <functional>
+#include <cmath>
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <algorithm>
+#include <map>
 
-template<int valueType>
-class Element{
+template<class Ty>  // HACK: Literally only a template because I couldn't sort out the header sort of hierarchy to have both element.hpp and function.hpp be able to use this correctly
+// Note: Pass as a pointer or const ref. A data structure used in the execution of functions. Allows us to access (read and write) all the necessary information at any level through the chain of execution.
+struct operationState {
+    // A list of the operations we do at each execution level, for example, one level includes addition and subtraction. This is iterated through in order to carry out calculations following the correct order.
+    static const std::vector<std::vector<char>> opLevels;
+
+    // A vec of shared_ptrs to our actual elements that comprise the function.
+    std::vector<std::shared_ptr<Ty>> data;
+
+    // Stores the values passed into the function call for any and all variables in the expression e.g. the current value of x
+    std::map<char, float> variableValues;
+
+    // Where we are in the element vec (index)
+    unsigned int scanPosition = 0;
+
+    // This takes values from operationState::opLevels - represents which operations we're currently concerned with.
+    std::vector<char> executionLevel;
+};
+
+template<class Ty>
+const std::vector<std::vector<char>> operationState<Ty>::opLevels = {
+//    {'(', ')'},
+    {'^'},
+    {'*', '/'},
+    {'+', '-'},
+};
+
+
+// HACK: this is a hack for ensuring that the static member Element::operatorSet isn't multiply defined
+class Element {
 public:
-    enum valueTypes {
-        numberVal       = 0,
-        variableVal     = 1,
-        operatorVal     = 2,
-        placeholderVal  = 3
-    }
-
-    constexpr Element(typeUnion buf) {
-        data = buf;
-    }
-
-    static constexpr std::pair<int, Element<valueType>> check(unsigned int i, char* operation) noexcept {
-        if(48 <= (int)operation[i] && (int)operation[i] <= 57) {   // If it's a number
-            int numEnd = i+1; 
-            for(int* j = &numEnd; *j < 0; *j++){   // Move along until we find something that cannot be interpreted as a number, subtly stealing the number of steps for later use
-                if( !(48 <= (int)operation[*j] && (int)operation[*j] <= 57) && !(operation[*j] == '.')){    // If the next one along is not a number or decimal point
-                    break; // Exit the for loop, we've reached the end of the num - now we know how long it is
-                }
-            }
-            char* buf[ numEnd-i ];   // Allocate space to extract our number - numEnd - i is the length of our number
-            for(int j = 0; j < lengthOfNum-i; j++){
-                buf[j] = operation[i+j];
-            }
-            // TEST: Does this non-null-terminated array break shit?
-            return std::make_pair<numEnd-i, Element<valueTypes::numberVal>(std::stof(buf))>;
-        }
-        else if(auto f = getIsKnownOperator(i, char* operation) ){
-            return std::make_pair<1, Element<valueTypes::operatorVal>(f);
-        }
-        else if( !((int)'a' <= (int)operation[i+1] && (int)operation[i+1] <= (int)'z') ){   // If the next char is not alphabetic
-            return std::make_pair<1, Element<valueTypes::variableVal>('x');
-        }
+    virtual std::string toString() {
+        return "Element{}";
     };
-    
-    constexpr float call(Element[] operation) noexcept {
-        if(valueType == numberVal){
-            return data.numberVal;
-        }
-        if(valueType == operatorVal){
-            return -1;
-            data.operatorVal(&operation);
-        }
-        if(valueType == variableVal){
-            return                                   // Somehow hook up the Function::call()'s var values to this
-        }
-    }
 
-    constexpr std::function<void(Element[]*)> getIsKnownOperator(unsigned int i, char* operation){
-        for(int j = i; j < i+4; j++){
-            for(int k = 0; k < 7; k++){
-                if(operation[j] == operatorSet[k].first[0]){
-                    return operatorSet[k].second;    // TODO: Make this work for multi-character operations such as "sin(", "sum("
-                }
-            }
-        }
-    }
+    virtual float call(operationState<Element>* opState){
+        std::cout << "[POTENTIAL ERROR]: Someone tried to call a base class element.\n";
+        return 0.0f;
+    };
+};
+
+// Stores numeric values, currently only as floats.
+class NumericElement : public Element {
 private:
-    
+    float _data;
+public:
+    NumericElement(float source) : _data(source) {};
 
-    static std::pair<char[4], std::function<void(Element[]*)>> operatorSet[7] {
-        std::make_pair("(\n\n\n", [](Element[]* operation){
-                // TODO: Handle a bracket instance:
-                return left + right;
-            }),
-        std::make_pair("%\n\n\n", [](Element[]* operation){
-                return fmod(left, right);
-            }),
-        std::make_pair("^\n\n\n", [](Element[]* operation){
-                return pow(left,  right);
-            }),
-        std::make_pair("*\n\n\n", [](Element[]* operation){
-                return left * right;
-            }),
-        std::make_pair("/\n\n\n", [](Element[]* operation){
-                return left / right;
-            }),
-        std::make_pair("+\n\n\n", [](Element[]* operation){
-                return left + right;
-            }),
-        std::make_pair("-\n\n\n", [](Element[]* operation){
-                return left - right;
-            }),
+    std::string toString() override {
+        std::stringstream ss;
+        ss << "NumericElement{" << _data << "}";
+        return ss.str();
     };
 
-    union typeUnion {
-        float numberVal;                                        // A constant term eg. 7.607
-        char variableVal;                                       // Stores a variable such as x, or z, or any other letter
-        std::function<void(Element[]*)> operatorVal;            // An operation or bracket
-        bool placeHolderVal;                                    // An erased value
-    } data;
-}
+    float call(operationState<Element>* opState) override {
+        return _data;
+    };
+};
+
+// The Element type that represents an operator (+, -, ^, sin()) in our function. Currently only does one character ops.
+class OperatorElement : public Element {
+private:
+    char _data;
+public:
+    OperatorElement(char source) : _data(source) {};
+
+    std::string toString() override {
+        std::stringstream ss;
+        ss << "OperatorElement{" << _data << "}";
+        return ss.str();
+    };
+
+    // TODO: Gotta get cleaned up.
+    float call(operationState<Element>* opState) override {
+        if(std::find(opState->executionLevel.begin(), opState->executionLevel.end(), _data) != opState->executionLevel.end()){
+            // If we're on the execution level we're concerned with.
+            switch(_data){
+                case '+':
+                {
+                    auto val = opState->data[opState->scanPosition-1]->call(opState) + opState->data[opState->scanPosition+1]->call(opState);
+					// How does this work if scanPosition = 0?
+                    opState->data.erase(opState->data.begin() + opState->scanPosition-1, opState->data.begin() + opState->scanPosition+2);
+					if (opState->scanPosition <= 1) {
+						// This has to be either an exempt call (by either an outside source or another element) or an operator at the start of a func, hence we need to handle insertion differently.
+						opState->data.insert(opState->data.begin(), std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1;
+					}
+					else {
+						opState->scanPosition -= 1;
+						// deleted - 1
+						opState->data.insert(opState->data.begin() + opState->scanPosition, std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1;
+					}
+                    return val;
+                    break;
+                }
+                case '-':
+                {
+                    auto val = opState->data[opState->scanPosition-1]->call(opState) - opState->data[opState->scanPosition+1]->call(opState);
+                    opState->data.erase(opState->data.begin() + opState->scanPosition-1, opState->data.begin() + opState->scanPosition+2);
+					if (opState->scanPosition <= 1) {
+						// This has to be either an exempt call (by either an outside source or another element) or an operator at the start of a func, hence we need to handle insertion differently.
+						opState->data.insert(opState->data.begin(), std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1; // TODO: Does this work for scanPosition = 0?
+					}
+					else {
+						opState->scanPosition -= 1;
+						// deleted - 1
+						opState->data.insert(opState->data.begin() + opState->scanPosition, std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1;
+					}
+                    return val;
+                    break;
+                }
+                case '*':
+                {
+                    auto val = opState->data[opState->scanPosition-1]->call(opState) * opState->data[opState->scanPosition+1]->call(opState);
+                    opState->data.erase(opState->data.begin() + opState->scanPosition-1, opState->data.begin() + opState->scanPosition+2);
+					if (opState->scanPosition <= 1) {
+						// This has to be either an exempt call (by either an outside source or another element) or an operator at the start of a func, hence we need to handle insertion differently.
+						opState->data.insert(opState->data.begin(), std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1; // TODO: Does this work for scanPosition = 0?
+					}
+					else {
+						opState->scanPosition -= 1;
+						// deleted - 1
+						opState->data.insert(opState->data.begin() + opState->scanPosition, std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1;
+					}
+                    return val;
+                    break;
+                }
+                case '/':
+                {
+                    auto val = opState->data[opState->scanPosition-1]->call(opState) / opState->data[opState->scanPosition+1]->call(opState);
+                    opState->data.erase(opState->data.begin() + opState->scanPosition-1, opState->data.begin() + opState->scanPosition+2);
+					if (opState->scanPosition <= 1) {
+						// This has to be either an exempt call (by either an outside source or another element) or an operator at the start of a func, hence we need to handle insertion differently.
+						opState->data.insert(opState->data.begin(), std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1; // TODO: Does this work for scanPosition = 0?
+					}
+					else {
+						opState->scanPosition -= 1;
+						// deleted - 1
+						opState->data.insert(opState->data.begin() + opState->scanPosition, std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1;
+					}
+                    return val;
+                    break;
+                }
+                case '^':
+                {
+                    auto val = pow(opState->data[opState->scanPosition-1]->call(opState), opState->data[opState->scanPosition+1]->call(opState));
+                    opState->data.erase(opState->data.begin() + opState->scanPosition-1, opState->data.begin() + opState->scanPosition+2);
+					if (opState->scanPosition <= 1) {
+						// This has to be either an exempt call (by either an outside source or another element) or an operator at the start of a func, hence we need to handle insertion differently.
+						opState->data.insert(opState->data.begin(), std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1; // TODO: Does this work for scanPosition = 0?
+					}
+					else {
+						opState->scanPosition -= 1;
+						// deleted - 1
+						opState->data.insert(opState->data.begin() + opState->scanPosition, std::make_shared<NumericElement>(val));
+						opState->scanPosition -= 1;
+					}
+                    return val;
+                    break;
+                }
+                default:
+                    std::cout << "[EXECUTION ERROR]: [ELEMENT.CALL]: The operator that was called on, {" << _data << "}, was found in the operation state's execution level, but the Element didn't implement it.\n";
+                    return 0.0f;
+                    break;
+            }
+        }
+        // TODO: Is this an error? Should we carry out the operation without changing the opState->data?
+        // std::cout << "[EXECUTION ERROR]: [ELEMENT.CALL]: The operator that was called on, {" << _data << "}, at scan {" << opState->scanPosition << "} was not found in the operation state's execution level.\n";
+        return 0.0f;
+    };
+};
+
+// Represents any constants or variables in a Function. Takes values from opState->variableValues.
+class VariableElement : public Element {
+private:
+    char _data;
+public:
+    VariableElement(char source) : _data(source) {};
+
+    std::string toString() override {
+        std::stringstream ss;
+        ss << "VariableElement{" << _data << "}";
+        return ss.str();
+    }
+
+    float call(operationState<Element>* opState) override {
+        if(opState->variableValues.find(_data) != opState->variableValues.end()){
+            return opState->variableValues[_data];
+        }
+        else {
+            std::cout << "[VariableElement::call]: An unassigned (no value given in Function::call()) variable was queried for value.\n";
+            return 0.0f;
+        }
+    }
+};
