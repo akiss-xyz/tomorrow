@@ -1,98 +1,168 @@
 #pragma once
 
+#include <string>
+#include <sstream>
+#include <memory>
 #include <vector>
 #include <iostream>
-#include <cmath>
-#include <functional>
+#include <map>
 
 #include "element.hpp"
-#include "image.hpp"
 
-enum logLevels{
-    DEBUG   = 1,
-    WARN    = 2,
-    TRACE   = 4,
-    SCAN    = 8,
-    CALC    = 16,
-};
-
-// TODO: we could constexpr a lot of this if we get rid of the std::strings - the constop could easily be a cstring and we could still do what we need
-// Furthermore, when we symbolise the function, there'll be no need for handling strings. Constexpr all the things.
-
-// Currently 4 nElemTypes
-template <unsigned int len, unsigned int nElemTypes>
 class Function {
 public:
-    // TODO: Create a logging system that actually makes sense.
-    unsigned int _debugLevel = logLevels::SCAN;
+    // Just to help us get what's happening.
+    void printOpState(const operationState<Element>* const opState, bool all){
+        std::cout << "------------- BEGIN OPSTATE --------------\n";
+        std::cout << "[opState]:\n";
+        if(all){
+            std::cout << "[opLevels]: \n";
+            std::cout << "{";
+            for(auto v : opState->opLevels){
+                std::cout << "{ ";
+                for(char c : v){
+                    std::cout << "'" << c << "',";
+                }
+                std::cout << "},\n";
+            }
 
-    std::vector<std::pair<char, std::function<float(float, float)>>> Keys = {
-        std::make_pair('(', [](float left, float right){
-                // TODO: Handle a bracket instance:
-                return left + right;
-            }),
-        std::make_pair('%', [](float left, float right){
-                return fmod(left, right);
-            }),
-        std::make_pair('^', [](float left, float right){
-                return pow(left,  right);
-            }),
-        std::make_pair('*', [](float left, float right){
-                return left * right;
-            }),
-        std::make_pair('/', [](float left, float right){
-                return left / right;
-            }),
-        std::make_pair('+', [](float left, float right){
-                return left + right;
-            }),
-        std::make_pair('-', [](float left, float right){
-                return left - right;
-            }),
+            std::cout << "[varValues]: \n";
+            std::cout << "{";
+            for(std::pair<char, float> v : opState->variableValues){
+                std::cout << "{ '" << v.first << "': " << v.second << "},\n";
+            }
+        }
+        if(opState->data[0]){
+            std::cout << "[data]: \n";
+            for(auto v : opState->data){
+                if(v){
+                    std::cout << v->toString() << ",\n";
+                }
+                else {
+                    std::cout << "[FAULT]: VOID POINTER-TO-ELEMENT IN OPSTATE->DATA\n";
+                }
+            }
+        }
+        else {
+            std::cout << "[FAULT]: VOID POINTER-TO-ELEMENT AS FIRST IN OPSTATE->DATA\n";
+        }
+        
+        
+        std::cout << "[scanPos]: {" << opState->scanPosition << "} out of {" << opState->data.size()-1 << "}\n";
+        std::cout << "[executionLevel]: {\n";
+        for(auto c : opState->executionLevel){
+            std::cout << "{ ";
+            std::cout << "'" << c << "',";
+            std::cout << "},\n";
+        }
+        std::cout << "}}\n------------- END OPSTATE ----------------\n";
+    }
+
+    // Deals with 
+    static const unsigned int nOfOperators = 6;
+    static const char operatorSet[6];
+
+    std::string toString(){
+        std::stringstream ss;
+        ss << "Function elemtree:{";
+        for(auto e : this->_data){
+            ss << "e{" << e->toString() << "},";
+        }
+        ss << "}"; return ss.str();
     };
+
+    Function(const std::string& source){
+        for(unsigned int i = 0; i < source.length(); i++){
+            auto elementContainer = getElementAt(i, source);
+            if(elementContainer.successfulParse == true){
+                this->_data.push_back(elementContainer.elem);
+                i += elementContainer.elemLength - 1;
+            } 
+            else {
+                std::cout << "[FUNCTION::FUNCTION(" << source << ")]: Parse error.\n";
+            }
+        }
+    };
+
+    float call(std::map<char, float> varMap){
+        operationState<Element> opState = { _data, varMap, 0, operationState<Element>::opLevels[0]};
+        for(auto operationLevel : operationState<Element>::opLevels){
+            opState.executionLevel = operationLevel;
+            while(opState.scanPosition < (opState.data.size()-1)){
+                // printOpState(&opState, true);
+                opState.data[opState.scanPosition]->call(&opState);
+                opState.scanPosition++;
+            }
+            opState.scanPosition = 0;
+        }
+        // std::cout << "END OPSTATE:\n";
+        // printOpState(&opState, true);
+        return opState.data[0]->call(&opState);
+    }
 private:
-    const Element Elems[nELems] = { 
-
-    const char* const source[len] = ",";
-    const Element func[len];
-public:
- /***     Main public functions    ***/
-    constexpr Function(const char* const operation) noexcept;
-
-    constexpr void plot(Image* img) const noexcept;
-
-    constexpr void plot(Image* img, unsigned char* colour) const noexcept;
-
-    /*Calls the current function operation, using the current key
-        set. To change the operation, call setOperation(). It's currently not possible to change the keyset on-the-fly.
-    * @param [in] float x : The value of the variable in the function operation in this call.
-    * @return void
-    * @see Keys, setOperation(), getOperation()
-    */
-    constexpr float call(float x) const noexcept;
-
-    /* Read a single float value from the operation, to the right of the current position.
-    * @param [in] unsigned int pos : The current position of the scan in the string. Should be on the operation that triggered the call.
-    * @param [out] int* length : A pointer to an integer that will hold the length of the offset. Used for the deletion of the term we're dealing with.
-    * @return float : The value parsed from the operation string.
-    * @see call(), ReadNumBack()
-    */
-    constexpr float ReadNum(unsigned int pos, int* length, float x) const noexcept;
-
-    // TODO: Instead of using int* length and then taking that as an offset, make it work off of the length of the std::string
-    // TODO: Test and rework the positioning. e.g. pos += 1 is a hack, make that work better.
     
-    /* Read a single float value from the operation, to the left of the current position.
-    * @param [in] unsigned int pos : The current position of the scan in the string. Should be on the operation that triggered the call.
-    * @param [out] int* length : A pointer to an integer that will hold the length of the offset. Used for the deletion of the term we're dealing with.
-    * @return float : The value parsed from the operation string.
-    * @see call(), ReadNum()
-    */
-    constexpr float ReadNumBack(int pos, int* length, float x) const noexcept;
 
-    /* A quick algorithm to reverse a std::string
-    * @param [in] std::string& str : A reference to the string to reverse.
-    * @see ReadNumBack(), ReadNum()
-    */
-    constexpr void reverseStr(const char* str) const noexcept;
+    struct elemContainer {
+    public:
+        bool successfulParse;
+        std::shared_ptr<Element> elem;
+        unsigned int elemLength = 1;
+
+        elemContainer(bool isSuccessful, std::shared_ptr<Element> element, unsigned int elemLen)
+        : successfulParse(isSuccessful), elem(element), elemLength(elemLen) {};
+    };
+
+    std::vector<std::shared_ptr<Element>> _data;
+
+    elemContainer getElementAt(unsigned int pos, const std::string& source){
+        if (isNumber(source[pos])){
+            std::string buf;
+            for(unsigned int i = pos; i < source.length(); i++){
+                if(isNumber(source[i]) || source[i] == '.'){
+                    buf.push_back(source[i]);
+                } else {
+                    break;
+                }
+            }
+            return elemContainer(true, std::make_shared<NumericElement>(std::stof(buf)), buf.length());
+        }
+        else { // HACK: can't get if-init working
+            elemContainer elem = getOperator(pos, source);
+            if (elem.successfulParse == true){
+                return elem;
+            }
+            else if (isVariable(pos, source)){
+                return elemContainer(true, std::make_shared<VariableElement>(source[pos]), 1);
+            }
+            else {
+                return elemContainer(false, std::make_shared<Element>(), 1);
+            }
+        }
+    };
+
+    static inline elemContainer getOperator(unsigned int pos, const std::string& source){
+        for(unsigned int i = 0; i < Function::nOfOperators; i++){
+            if(operatorSet[i] == source[pos]){
+                return elemContainer(true, std::make_shared<OperatorElement>(source[pos]), 1);
+            }
+        }
+        return elemContainer(false, std::make_shared<OperatorElement>('0'), 1);
+    };
+
+    static inline bool isNumber(const char val){
+        if(48 <= (int)val && (int)val <= 57){
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+    static inline bool isVariable(unsigned int pos, const std::string& source){
+        if( !( (int)'a' <= (int)source[pos+1] && (int)source[pos+1] <= (int)'z' ) && ( (int)'a' <= (int)source[pos] && (int)source[pos] <= (int)'z' ) ){
+            return true;
+        } else {
+            return false;
+        }
+    };
+
 };
