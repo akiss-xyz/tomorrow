@@ -18,7 +18,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     add_compile_definitions(GCC)
     # Adding some compiler flags - we want as many errors and suggestions and information from the compiler as possible
     # Added nounusused parameter because honestly wth
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -Wall -Wextra -Werror -Wno-unused-parameter")
 endif()
 if ( MSVC )
     # Once again, just so we know what's good
