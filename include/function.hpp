@@ -66,4 +66,3 @@ private:
 
     static inline bool isVariable(unsigned int pos, const std::string& source) noexcept;
 };
-

@@ -9,15 +9,15 @@
 #include "image.hpp"
 
 // TODO: Adding still doesn't work
-// TODO: Compile faster wtf
+// TODO: Compile faster 
 
 int main(){
     Image img(300, 450, 1, 3);
     cimg::CImgDisplay display(*img.image, "A plot.");
 
     unsigned char fColour[3] = { 255, 0, 0 };
-    unsigned char randomColour[3] = { 255, 255, 255 };
-    img.drawAxes(randomColour);
+    unsigned char axesColour[3] = { 255, 255, 255 };
+    img.drawAxes(axesColour);
     img.image->display(display);
 
     std::cout << "Enter a function, or q to exit.\n";
@@ -38,4 +38,4 @@ int main(){
 
     std::cout << "Bye bye!";
     return EXIT_SUCCESS;
-}
+}  
