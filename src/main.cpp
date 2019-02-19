@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cstdio>
 
 #include <CImg.h>
 
@@ -10,42 +11,31 @@
 // TODO: Adding still doesn't work
 // TODO: Compile faster wtf
 
-int main()
-{   
-    Function add("2.75+7.33");
-    std::cout << add.toString() << '\n';
-    std::cout << add.call(std::map<char,float>({ {'x', 9.3} })) << '\n';
+int main(){
+    Image img(300, 450, 1, 3);
+    cimg::CImgDisplay display(*img.image, "A plot.");
 
-    Function take("2.75-7.33");
-    std::cout << take.toString() << '\n';
-    std::cout << take.call(std::map<char,float>({ {'x', 9.3} })) << '\n';
+    unsigned char fColour[3] = { 255, 0, 0 };
+    unsigned char randomColour[3] = { 255, 255, 255 };
+    img.drawAxes(randomColour);
+    img.image->display(display);
 
-    Function mult("2.75*7.33");
-    std::cout << mult.toString() << '\n';
-    std::cout << mult.call(std::map<char,float>({ {'x', 9.3} })) << '\n';
+    std::cout << "Enter a function, or q to exit.\n";
+    while(!display.is_closed()){
+        std::cout << "f(x)=";
 
-    Function div("2.75/7.33");
-    std::cout << div.toString() << '\n';
-    std::cout << div.call(std::map<char,float>({ {'x', 9.3} })) << '\n';
-    
-    Function exp("2.75^7.33");
-    std::cout << exp.toString() << '\n';
-    std::cout << exp.call(std::map<char,float>({ {'x', 9.3} })) << '\n';
+        std::string source;
+        std::cin >> source;
+        
+        if(source == "q" || source == "quit" || source == "Quit" ){
+            img.image->save_bmp("graph.bmp");
+            display.close();
+        } else {
+            Function f(source);
+            f.plot(&img, fColour, 3, 5, std::make_pair(-5,5), std::make_pair(-5,5))->display(display);        
+        }
+    }
 
-    Function bidmas("2.75-7.33+7.33*2-3/2");
-    std::cout << bidmas.toString() << '\n';
-    std::cout << bidmas.call(std::map<char,float>({ {'x', 9.3} })) << '\n';
-    
-    Function xVal("2*x+7");
-    std::cout << xVal.toString() << '\n';
-    std::cout << xVal.call(std::map<char,float>({ {'x', 4} })) << '\n';
-
-	Function polynomial("13.254*x^3+2*x^2-13*x+15/2");
-	std::cout << polynomial.toString() << '\n';
-	std::cout << polynomial.call(std::map<char, float>({ {'x', -1.27197529f} })) << '\n';
-
-	Function _3dequation("x/2+y/3");
-	std::cout << _3dequation.toString() << '\n';
-	std::cout << _3dequation.call(std::map<char, float>({ {'x', 2}, {'y', 3} })) << '\n';
+    std::cout << "Bye bye!";
     return EXIT_SUCCESS;
 }
