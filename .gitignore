@@ -1,2 +1,2 @@
-build/x64-vs/*
 build/x64-gcc/*
+build/x64-vs/*

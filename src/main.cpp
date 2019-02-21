@@ -13,7 +13,7 @@
 
 int main(){
     Image img(300, 450, 1, 3);
-    cimg::CImgDisplay display(*img.image, "A plot.");
+    cimg::CImgDisplay display(*img.image, "Tomorrow");
 
     unsigned char fColour[3] = { 255, 0, 0 };
     unsigned char axesColour[3] = { 255, 255, 255 };

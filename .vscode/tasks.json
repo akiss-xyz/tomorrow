@@ -24,31 +24,28 @@
             "problemMatcher": []
         },
         {
-            "label": "Build - x64 jesus",
+            "label": "Build & Run (cmd) - x64 gcc",
             "type": "shell",
-            "command": "cd build/x64-other && cmake ../.. && make && cd ../..",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "command": "cd build/x64-gcc && cmake ../.. -G \"Unix Makefiles\" && make && tomorrow.exe && cd ../..",
             "problemMatcher": []
         },
         {
-            "label": "Run - available x64-gcc binary",
+            "label": "Build & Run (bash) - x64 gcc",
             "type": "shell",
-            "command": "cd build/x64-gcc && hello.exe hello && cd ../..",
+            "command": "cd build/x64-gcc && cmake ../.. -G \"Unix Makefiles\" && make && ./tomorrow && cd ../..",
             "problemMatcher": []
         },
         {
-            "label": "Build & Run - x64 gcc",
+            "label": "Run (cmd) - x64 gcc",
             "type": "shell",
-            "command": "cd build/x64-gcc && cmake ../.. -G \"Unix Makefiles\" && make && hello.exe hello && cd ../..",
+            "command": "cd build/x64-gcc && tomorrow.exe && cd ../..",
             "problemMatcher": []
         },
         {
-            "label": "Run - available other binary",
+            "label": "Run (bash) - x64 gcc",
             "type": "shell",
-            "command": "cd build/x64-other && hello.exe hello && cd ../.."
-        }
+            "command": "cd build/x64-gcc && ./tomorrow && cd ../..",
+            "problemMatcher": []
+        },
     ]
 }
