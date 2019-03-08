@@ -99,7 +99,7 @@ float OperatorElement::call(operationState* opState) const noexcept {
         }
     }
     // TODO: Is this an error? Should we carry out the operation without changing the opState->data?
-    // std::cout << "[EXECUTION ERROR]: [ELEMENT.CALL]: The operator that was called on, {" << _data << "}, at scan {" << opState->scanPosition << "} was not found in the operation state's execution level.\n";
+    std::cout << "[EXECUTION ERROR]: [ELEMENT.CALL]: The operator that was called on, {" << _data << "}, at scan {" << opState->scanPosition << "} was not found in the operation state's execution level.\n";
     return 0.0f;
 };
 
@@ -126,7 +126,7 @@ float VariableElement::call(operationState* opState) const noexcept {
 		}
     }
     else {
-        std::cout << "[VariableElement::call]: An unassigned (no value given in Function::call()) variable was queried for value.\n";
+        // std::cout << "[VariableElement::call]: An unassigned (no value given in Function::call()) variable was queried for value.\n";
         return 0.0f;
     }
 };

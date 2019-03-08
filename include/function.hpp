@@ -60,8 +60,8 @@ public:
  
         struct parsedElem {
         public:
-            bool isOperatorType;
-            bool isValueType;
+            bool isOperatorType = false;
+            bool isValueType = false;
         } latestElem;
 
         elemContainer(bool isSuccessful, std::shared_ptr<Element> element, unsigned int elemLen, parsedElem parse)
@@ -72,7 +72,7 @@ private:
     /* Parsing utility functions */
     elemContainer getElementAt(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) const noexcept;
 
-    static inline elemContainer getOperator(unsigned int pos, const std::string& source) noexcept;
+    static inline elemContainer getOperator(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) noexcept;
 
     static inline bool isNumeric(const std::string& source, unsigned int start, elemContainer::parsedElem latest) noexcept;
 

@@ -9,6 +9,47 @@ static constexpr inline bool isDigit(char c) noexcept {
     }
 }
 
+static inline bool namesVar(char c) noexcept {
+    if('a' <= c && c <= 'z'){ 
+        return true;
+    }
+    else {
+        return false;
+    }
+};
+static inline bool isNext(const std::string& source, unsigned int pos, std::function<bool(char)> isTargetChar){
+    for(unsigned int i = pos; i < source.length(); i++){
+        if(source[i] != source[pos]){
+            if(isTargetChar(source[i])){
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    std::cout << "[ isNext(source: \'" << source  << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
+ 
+    return false;
+}
+
+static inline bool isNext(const std::string& source, unsigned int pos, std::function<bool(char)> isTargetChar, unsigned int& out_len){
+    for(unsigned int i = pos; i < source.length(); i++){
+        if(source[i] != source[pos]){
+            if(isTargetChar(source[i])){
+                out_len = i - pos;
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    std::cout << "[ isNext(source: \'" << source  << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
+ 
+    return false;
+}
+
+
+
 const std::map<const char, Function::operatorInfo> Function::operatorSet = { {'+', { true, false }}, {'-', { true, false }}, {'*', { true, false } }, {'/', { true, false }}, {'^', {true, false} }, {'(', { false, true } } };
 
 void Function::printOpState(const Element::operationState* const opState, bool all) const noexcept {
@@ -81,28 +122,25 @@ Function::Function(const std::string& source) noexcept {
         if(elementContainer.successfulParse == true){
             // If we successfully found an element, put it into our data buffer.
             this->_data.push_back(elementContainer.elem);
-            std::cout << "[Function]: data buf looks like: ";
+            /* std::cout << "[Function]: data buf looks like: ";
             if(_data[0]){
                 std::cout << "[data]: \n";
                 for(auto v : _data){
-                if(v){
-                    std::cout << v->toString() << ",\n";
+                   if(v){
+                      std::cout << v->toString() << ",\n";
+                   }
+                   else {
+                      std::cout << "[FAULT]: VOID POINTER-TO-ELEMENT IN OPSTATE->DATA\n";
+                   }
                 }
-                else {
-                    std::cout << "[FAULT]: VOID POINTER-TO-ELEMENT IN OPSTATE->DATA\n";
-                }
-            }
-    }
-    else {
-        std::cout << "[FAULT]: VOID POINTER-TO-ELEMENT AS FIRST IN OPSTATE->DATA\n";
-    }
+            } */
             latest = elementContainer.latestElem;
             // Move back i so that the next character we look at is just after the one that parsed this elem.
             i += elementContainer.elemLength - 1;
         } 
         else {
             // Couldn't parse from char.
-            std::cout << "[FUNCTION::FUNCTION(" << source << ")]: Parse error.\n";
+            std::cout << "[FUNCTION::FUNCTION(" << source << ")]: Couldn't parse from char \'" << source[i] << " at {" << i <<  "}. Parse error.\n";
         }
     }
 };
@@ -134,40 +172,51 @@ Function::elemContainer Function::getElementAt(unsigned int pos, const std::stri
     if (isNumeric(source, pos, latest)){
         std::string buf;
         bool encounteredNum = false; unsigned int nOfNegatives = 0;
-        for(unsigned int i = pos; i < source.length(); i++){
+        for(unsigned int i = pos; i <= source.length(); i++){
             if(isDigit(source[i])){
                 encounteredNum = true;
                 buf.push_back(source[i]);
             }
-            if(!encounteredNum && source[i] == '-'){
+            else if(!encounteredNum && source[i] == '-'){
                 nOfNegatives++;
                 buf.push_back(source[i]);
             }
-            if(source[i] == '.'){
+            else if(source[i] == '.'){
+                if(!encounteredNum){
+                    buf.push_back('0');
+                }
                 buf.push_back(source[i]);
             } else {
                 break;
             }
         }
         if(nOfNegatives){
-            if(nOfNegatives % 2){
+            if(nOfNegatives % 2){ // In this case, buf.length()
                 // Odd number of negatives
                 buf.erase(std::remove(buf.begin()+1, buf.end(), '-'), buf.end());
+                return elemContainer(true, std::make_shared<NumericElement>(std::stof(buf)), buf.length() + nOfNegatives - 1, {false, true});
+                
             }
-            buf.erase(std::remove(buf.begin(), buf.end(), '-'), buf.end());
+            else { // In this case, buf.length() + nOfNegatives
+                buf.erase(std::remove(buf.begin(), buf.end(), '-'), buf.end());
+                return elemContainer(true, std::make_shared<NumericElement>(std::stof(buf)), buf.length() + nOfNegatives, {false, true});
+            }
         }
-        std::cout << "[ getElementAt(" << pos << ", " << source << ", latest): We're about to call stof on this buffer: {" << buf << "}\n";
         return elemContainer(true, std::make_shared<NumericElement>(std::stof(buf)), buf.length(), {false, true});
     }
     // Pass in end pointer.
 	else if (isVariable(pos, source, latest)) {
 		if (source[pos] == '-') {
-			return elemContainer(true, std::make_shared<VariableElement>(source[pos + 1], 0), 2, {false, true});
+            unsigned int nOfNegatives = 0; isNext(source, pos, namesVar, nOfNegatives);
+            if(nOfNegatives % 2){
+                return elemContainer(true, std::make_shared<VariableElement>(source[pos + nOfNegatives], 0), 1 + nOfNegatives, {false, true});
+            }
+			return elemContainer(true, std::make_shared<VariableElement>(source[pos + nOfNegatives], 1), 1 + nOfNegatives, {false, true});
 		}
 		return elemContainer(true, std::make_shared<VariableElement>(source[pos], 1), 1, {false, true});
 	}
     else { // HACK: can't get if-init working
-        elemContainer elem = getOperator(pos, source);
+        elemContainer elem = getOperator(pos, source, latest);
         if (elem.successfulParse == true){
             return elem;
         }
@@ -177,11 +226,13 @@ Function::elemContainer Function::getElementAt(unsigned int pos, const std::stri
     }
 };
 
-inline Function::elemContainer Function::getOperator(unsigned int pos, const std::string& source) noexcept {
+inline Function::elemContainer Function::getOperator(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) noexcept {
     for(unsigned int i = 0; i < Function::nOfOperators; i++){
         // If we this character is found in our opSet, and the context suggests it can be an operator
-        std::cout << "[ getOperator(" << pos << "," << source << ") ]: Looping through nOfOperators, operatorSet.count(source[pos]) == {" << (operatorSet.count(source[pos])) << "}\n";
         if(operatorSet.count(source[pos])){
+            if(!latest.isValueType){
+                return elemContainer(false, std::make_shared<OperatorElement>('0'), 1, {false, false});
+            }
             return elemContainer(true, std::make_shared<OperatorElement>(source[pos]), 1, {true, false});
         }
     }
@@ -191,22 +242,24 @@ inline Function::elemContainer Function::getOperator(unsigned int pos, const std
 
 // This function needs to decide if we parse this point into a NumericElement or not.
 inline bool Function::isNumeric(const std::string& source, unsigned int start, elemContainer::parsedElem latest) noexcept {
-    std::cout << "[ isNumeric(" << source << ", " << start << "): ";
     if(source[start] == '-'){
         if(latest.isOperatorType && !latest.isValueType){ // If there's an operator on the left that's not a bracket.
-           std::cout << "isNumeric at source[start+1]: " << isNumeric(source, start+1, latest) << "\n"; 
            return isNumeric(source, start+1, latest); // Return whether or not the character on the right of the minus is a number.
         }
         else {
             if(start == 0){
-                std::cout << "start is 0, return true\n";
-                return true; // Latest doesn't have a value yet because we're the first thing.
+                // Find next non- '-'. What is it?
+                for(unsigned int i = start; i < source.length(); i++){
+                    if(source[i] != '-'){
+                        if(isDigit(source[i])){
+                            return true;
+                        }
+                    }
+                }
             }
-            std::cout << "Not an operator on the left and not at the start. False. \n";
             return false;
         }
     }
-    std::cout << "A digit. True.\n";
     return isDigit(source[start]);
 };
 
@@ -215,26 +268,14 @@ static inline unsigned int findNumberEnd(unsigned int start, const std::string& 
     for(unsigned int i = start; i < source.length(); i++){
         if(isDigit(source[i])){
             len++;
-        } else {
-            return start + len;
         }
     }
     // We got to the end of the string.
     return start+len;
 };
 
-static inline bool namesVar(char c) noexcept {
-    if('a' <= c && c <= 'z'){ 
-        return true;
-    }
-    else {
-        return false;
-    }
-};
-
 inline bool Function::isVariable(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) noexcept {
-    std::cout << "[ isVariable(" << pos << "," << source << ",{isOperatorType:" << latest.isOperatorType << ", isValueType: " << latest.isValueType << "}]: namesVar[source(pos+1)={" << namesVar(source[pos+1]) << "}\n";  
-    if(source[pos] == '-' && namesVar(source[pos+1]) && !latest.isValueType){
+    if(source[pos] == '-' && isNext(source, pos, namesVar) && !latest.isValueType){
         return true; // e.g. 7*-x
     } 
     if(namesVar(source[pos])){
