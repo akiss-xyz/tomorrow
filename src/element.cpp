@@ -107,7 +107,12 @@ float OperatorElement::call(operationState* opState) const noexcept {
 
 std::string VariableElement::toString() const noexcept {
     std::stringstream ss;
-    ss << "VariableElement{" << _data << "}";
+    if(_sign){
+        ss << "VariableElement{" << _data << "}";
+    }
+    else{
+         ss << "VariableElement{-" << _data << "}";
+    } 
     return ss.str();
 };
 

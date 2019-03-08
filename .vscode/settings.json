@@ -49,6 +49,13 @@
         "xutility": "cpp",
         "sstream": "cpp",
         "map": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "array": "cpp",
+        "*.tcc": "cpp",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cwctype": "cpp",
+        "optional": "cpp",
+        "string_view": "cpp"
     }
 }

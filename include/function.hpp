@@ -16,9 +16,15 @@ public:
     void printOpState(const Element::operationState* const opState, bool all) const noexcept;
     std::string toString() const noexcept;
 
+    struct operatorInfo {
+    public:
+        bool isBinary = false;
+        bool isUnary = false;
+    };
+
     /* Data related to this function */
     static const unsigned int nOfOperators = 6;
-    static const char operatorSet[6];
+    static const std::map<const char, Function::operatorInfo> operatorSet;
     // List of our element data
     std::vector<std::shared_ptr<Element>> _data;
 
@@ -45,24 +51,30 @@ public:
         }
         return img->image;
     };
-private:
+
     struct elemContainer {
     public:
         bool successfulParse;
         std::shared_ptr<Element> elem;
         unsigned int elemLength = 1;
+ 
+        struct parsedElem {
+        public:
+            bool isOperatorType;
+            bool isValueType;
+        } latestElem;
 
-        elemContainer(bool isSuccessful, std::shared_ptr<Element> element, unsigned int elemLen)
-        : successfulParse(isSuccessful), elem(element), elemLength(elemLen) {};
+        elemContainer(bool isSuccessful, std::shared_ptr<Element> element, unsigned int elemLen, parsedElem parse)
+        : successfulParse(isSuccessful), elem(element), elemLength(elemLen), latestElem(parse) {};
     };
 
-
+private:
     /* Parsing utility functions */
-    elemContainer getElementAt(unsigned int pos, const std::string& source) const noexcept;
+    elemContainer getElementAt(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) const noexcept;
 
     static inline elemContainer getOperator(unsigned int pos, const std::string& source) noexcept;
 
-    static inline bool isNumber(const std::string& source, unsigned int val) noexcept;
+    static inline bool isNumeric(const std::string& source, unsigned int start, elemContainer::parsedElem latest) noexcept;
 
-    static inline bool isVariable(unsigned int pos, const std::string& source) noexcept;
+    static inline bool isVariable(unsigned int start, const std::string& source, elemContainer::parsedElem latest) noexcept;
 };
