@@ -17,6 +17,7 @@ static inline bool namesVar(char c) noexcept {
         return false;
     }
 };
+
 static inline bool isNext(const std::string& source, unsigned int pos, std::function<bool(char)> isTargetChar){
     for(unsigned int i = pos; i < source.length(); i++){
         if(source[i] != source[pos]){
@@ -47,8 +48,6 @@ static inline bool isNext(const std::string& source, unsigned int pos, std::func
  
     return false;
 }
-
-
 
 const std::map<const char, Function::operatorInfo> Function::operatorSet = { {'+', { true, false }}, {'-', { true, false }}, {'*', { true, false } }, {'/', { true, false }}, {'^', {true, false} }, {'(', { false, true } } };
 
@@ -150,7 +149,7 @@ float Function::call(std::map<char, float> varMap) const noexcept {
     // Go through each operation level (aka go down BIDMAS),
     for(auto operationLevel : Element::operationState::opLevels){
         opState.executionLevel = operationLevel;
-        // printOpState(&opState, false);
+        printOpState(&opState, false);
         // While we're scanning within the bounds of our list of elements,
         while(opState.scanPosition < (opState.data.size()-1)){
             // Call each element, so that the operators can carry out their corresponding actions.
@@ -168,7 +167,27 @@ float Function::call(std::map<char, float> varMap) const noexcept {
     return opState.data[0]->call(&opState);
 };
 
+// Bracket utility functions
+static unsigned int matchBracket(const std::string& source, unsigned int pos) noexcept {
+    int nOfSubBrackets = 0;
+    for(unsigned int i = pos; i < source.length(); i++){
+        if(source[i] == '('){ nOfSubBrackets++; }
+        if(source[i] == ')'){
+            nOfSubBrackets--;
+            if(nOfSubBrackets == 0){
+                return i;
+            }
+        }
+    }
+    std::cout << "[ Function::getElementAt -> matchBracket(source: {#" << source << "#}, pos: {" << pos << "})]: Bracket at that position was not matched by an end-bracket. Parse error.\n";
+    return pos;
+}
 Function::elemContainer Function::getElementAt(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) const noexcept {
+    if(source[pos] == '('){
+        auto lenOfBracketExpression = matchBracket(source, pos) - pos;
+        auto bracketExpressionFunc = std::make_shared<Function>(source.substr(pos+1, lenOfBracketExpression-1));
+        return elemContainer(true, std::make_shared<BracketElement>(bracketExpressionFunc), lenOfBracketExpression+1, {false, true} );
+    }
     if (isNumeric(source, pos, latest)){
         std::string buf;
         bool encounteredNum = false; unsigned int nOfNegatives = 0;

@@ -35,12 +35,14 @@ public:
         std::map<char, float> varMap = {
             { 'x', 0.0f },
         };
+        std::pair<float, float> latest;
         for(int i = 0; i < (int)img->xSize; i++){
             float x = (float)xrange.first + (float)i*(((float)xrange.second - (float)xrange.first)/((float)img->xSize));
             varMap['x'] = x;
 
             auto toScale = img->ySize / (yrange.second - yrange.first);
             
+
             // This is not a good algorithm for thickness. It should be a lot more like a guaranteed cross-sectional length, and we calculate vectors between points.
             for(int jx = 0; jx < (xthickness-1)/2; jx++){
                 for(int jy = 0; jy < (ythickness-1)/2; jy++){

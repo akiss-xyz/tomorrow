@@ -1,5 +1,6 @@
 #include "element.hpp"
 
+#include "function.hpp"
 
 const std::vector<std::vector<char>> Element::operationState::opLevels = {
 //    {'(', ')'},
@@ -34,6 +35,7 @@ float Element::binaryOperation(float val, operationState* opState) noexcept {
         opState->data.insert(opState->data.begin() + opState->scanPosition, std::make_shared<NumericElement>(val));
         opState->scanPosition -= 1;
     }
+    opState->isValueCall = false;
     return val;
 };
 
@@ -60,6 +62,7 @@ std::string OperatorElement::toString() const noexcept {
 
 float OperatorElement::call(operationState* opState) const noexcept {
     if(std::find(opState->executionLevel.begin(), opState->executionLevel.end(), _data) != opState->executionLevel.end()){
+        opState->isValueCall = true;
         // If we're on the execution level we're concerned with.
         switch(_data){
             case '+':
@@ -99,7 +102,8 @@ float OperatorElement::call(operationState* opState) const noexcept {
         }
     }
     // TODO: Is this an error? Should we carry out the operation without changing the opState->data?
-    std::cout << "[EXECUTION ERROR]: [ELEMENT.CALL]: The operator that was called on, {" << _data << "}, at scan {" << opState->scanPosition << "} was not found in the operation state's execution level.\n";
+    // Testing on f(x) = (x^2)*(x^2), this works but complains. Muting for now.
+    // std::cout << "[EXECUTION ERROR]: [ELEMENT.CALL]: The operator that was called on, {" << _data << "}, at scan {" << opState->scanPosition << "} was not found in the operation state's execution level.\n";
     return 0.0f;
 };
 
@@ -130,3 +134,19 @@ float VariableElement::call(operationState* opState) const noexcept {
         return 0.0f;
     }
 };
+
+/* BracketElement methods */
+
+std::string BracketElement::toString() const noexcept {
+    std::stringstream ss;
+    ss << "BracketElement{" << _data->toString() << "}";
+    return ss.str();
+};
+
+float BracketElement::call(operationState* opState) const noexcept {
+    if(opState->isValueCall){
+        return _data->call(opState->variableValues);
+    }
+    return 0.0f;
+};
+

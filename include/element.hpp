@@ -27,6 +27,11 @@ public:
 
         // This takes values from operationState::opLevels - represents which operations we're currently concerned with.
         std::vector<char> executionLevel;
+
+        // A boolean to tell computationally expensive value types to only compute if an operator calls them.
+        // E.g., when calling a function, every element is called. These are not value calls, so that computationally expensive elements do not run needlessly.
+        // On the other hand, when an Operator Element is being called, these are value calls - these operators need to know the value of the element itself.
+        bool isValueCall = false; 
     };
 
     virtual std::string toString() const noexcept;
@@ -68,6 +73,21 @@ private:
 	bool _sign;
 public:
     VariableElement(char source, bool sign) : _data(source), _sign(sign) {};
+
+    std::string toString() const noexcept override;
+
+    float call(operationState* opState) const noexcept override;
+};
+
+// Promise the bracketelement functions?
+class Function;
+
+class BracketElement : public Element {
+private:
+    std::shared_ptr<Function> _data;
+
+public:
+    BracketElement(std::shared_ptr<Function> func) : _data(func) {};
 
     std::string toString() const noexcept override;
 
