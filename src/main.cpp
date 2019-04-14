@@ -12,7 +12,7 @@
 // TODO: Compile faster 
 
 int main(){
-    Image img(300, 450, 1, 3);
+    Image img(700, 700, 1, 3);
     cimg::CImgDisplay display(*img.image, "Tomorrow");
 
     unsigned char fColour[3] = { 255, 0, 0 };
@@ -32,7 +32,7 @@ int main(){
             display.close();
         } else {
             Function f(source);
-            f.plot(&img, fColour, 3, 5, std::make_pair(-5,5), std::make_pair(-5,5))->display(display);        
+            f.plot(&img, fColour, 3, std::make_pair(-5, 5), std::make_pair(-5,5))->display(display);        
         }
     }
 

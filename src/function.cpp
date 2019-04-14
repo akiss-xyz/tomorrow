@@ -149,7 +149,7 @@ float Function::call(std::map<char, float> varMap) const noexcept {
     // Go through each operation level (aka go down BIDMAS),
     for(auto operationLevel : Element::operationState::opLevels){
         opState.executionLevel = operationLevel;
-        printOpState(&opState, false);
+        // printOpState(&opState, false);
         // While we're scanning within the bounds of our list of elements,
         while(opState.scanPosition < (opState.data.size()-1)){
             // Call each element, so that the operators can carry out their corresponding actions.
