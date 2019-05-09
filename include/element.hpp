@@ -79,7 +79,7 @@ public:
     float call(operationState* opState) const noexcept override;
 };
 
-// Promise the bracketelement functions?
+// Forward Declaration of Function: Promise the Bracketelement class that the Function class exists
 class Function;
 
 class BracketElement : public Element {

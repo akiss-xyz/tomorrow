@@ -14,6 +14,7 @@
 class Function {
 public:
     /* Debug and help methods */
+    bool debugMode = true;
     void printOpState(const Element::operationState* const opState, bool all) const noexcept;
     std::string toString() const noexcept;
 
@@ -109,7 +110,7 @@ public:
                 continue;
             }
 
-            auto pointsToDraw = gradientStepFunction(latestPoints, xstep, 1/yScaleFactor, 5);
+            auto pointsToDraw = gradientStepFunction(latestPoints, xstep, 1/yScaleFactor, thickness);
             for(auto point : *pointsToDraw){
                 img->image->draw_point(img->xSize/2 + point.x*xScaleFactor, img->ySize/2 - point.y*yScaleFactor, colour, 1);
             }

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <cstdio>
 
 #include <CImg.h>
 
@@ -8,7 +7,6 @@
 #include "function.hpp"
 #include "image.hpp"
 
-// TODO: Adding still doesn't work
 // TODO: Compile faster 
 
 int main(){

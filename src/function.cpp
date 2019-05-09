@@ -121,7 +121,22 @@ Function::Function(const std::string& source) noexcept {
         if(elementContainer.successfulParse == true){
             // If we successfully found an element, put it into our data buffer.
             this->_data.push_back(elementContainer.elem);
-            /* std::cout << "[Function]: data buf looks like: ";
+            if(this->debugMode){
+                std::cout << "[Function]: data buf looks like: ";
+                if(_data[0]){
+                    std::cout << "[data]: \n";
+                    for(auto v : _data){
+                       if(v){
+                          std::cout << v->toString() << ",\n";
+                       }
+                       else {
+                          std::cout << "[FAULT]: VOID POINTER-TO-ELEMENT IN OPSTATE->DATA\n";
+                       }
+                    }
+                } 
+            }
+            /*
+            std::cout << "[Function]: data buf looks like: ";
             if(_data[0]){
                 std::cout << "[data]: \n";
                 for(auto v : _data){
@@ -132,7 +147,8 @@ Function::Function(const std::string& source) noexcept {
                       std::cout << "[FAULT]: VOID POINTER-TO-ELEMENT IN OPSTATE->DATA\n";
                    }
                 }
-            } */
+            } 
+            */
             latest = elementContainer.latestElem;
             // Move back i so that the next character we look at is just after the one that parsed this elem.
             i += elementContainer.elemLength - 1;
@@ -179,7 +195,7 @@ static unsigned int matchBracket(const std::string& source, unsigned int pos) no
             }
         }
     }
-    std::cout << "[ Function::getElementAt -> matchBracket(source: {#" << source << "#}, pos: {" << pos << "})]: Bracket at that position was not matched by an end-bracket. Parse error.\n";
+    std::cout << "[ Function::getElementAt -> matchBracket(source: {" << source << "}, pos: " << pos << ")]: Bracket at that position was not matched by an end-bracket. Parse error.\n";
     return pos;
 }
 Function::elemContainer Function::getElementAt(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) const noexcept {
@@ -246,13 +262,34 @@ Function::elemContainer Function::getElementAt(unsigned int pos, const std::stri
 };
 
 inline Function::elemContainer Function::getOperator(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) noexcept {
+    std::cout << "[getOperator(" << pos << ", " << source << ", latestValType:" << latest.isValueType << ")]\n";
     for(unsigned int i = 0; i < Function::nOfOperators; i++){
         // If we this character is found in our opSet, and the context suggests it can be an operator
         if(operatorSet.count(source[pos])){
-            if(!latest.isValueType){
-                return elemContainer(false, std::make_shared<OperatorElement>('0'), 1, {false, false});
+            if(latest.isValueType){
+                std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] isValueType.\n";
+                if(source[pos] == '-' && source[pos+1] == '-'){
+                    std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] next is a -, continuing.\n";
+
+                    if(source[pos] != '-'){
+                        std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] Found char in opSet, latest is ValueType and next char is a negative, but we aren't a negative - is this an error? Please report.\n";
+                    }
+                    unsigned int nOfNegatives = 2;
+                    unsigned int index = 0;
+                    while(source[pos + 2 + index] == '-'){
+                        nOfNegatives++; index++;
+                        std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] found another -, index = " << index << ", nOfNegatives = " << nOfNegatives << ".\n";
+                    }
+                    if(nOfNegatives % 2){
+                        return elemContainer(true, std::make_shared<OperatorElement>('-'), nOfNegatives, {true, false});
+                    }
+                    else {
+                         return elemContainer(true, std::make_shared<OperatorElement>('+'), nOfNegatives, {true, false});
+                    }
+                }
+                return elemContainer(true, std::make_shared<OperatorElement>(source[pos]), 1, {true, false});
             }
-            return elemContainer(true, std::make_shared<OperatorElement>(source[pos]), 1, {true, false});
+            return elemContainer(false, std::make_shared<OperatorElement>('0'), 1, {false, false});
         }
     }
     return elemContainer(false, std::make_shared<OperatorElement>('0'), 1, {false, false});
@@ -266,12 +303,15 @@ inline bool Function::isNumeric(const std::string& source, unsigned int start, e
            return isNumeric(source, start+1, latest); // Return whether or not the character on the right of the minus is a number.
         }
         else {
-            if(start == 0){
+            if(start == 0){                         // We're at the beginning of the string
                 // Find next non- '-'. What is it?
                 for(unsigned int i = start; i < source.length(); i++){
                     if(source[i] != '-'){
                         if(isDigit(source[i])){
                             return true;
+                        }
+                        else {
+                            return false;
                         }
                     }
                 }
