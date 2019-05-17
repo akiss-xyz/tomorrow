@@ -33,6 +33,36 @@ static inline bool isNext(const std::string& source, unsigned int pos, std::func
     return false;
 }
 
+static inline bool isNext(const std::string& source, unsigned int pos, std::function<bool(char)> isSimilar, std::function<bool(char)> isTargetChar){
+    for(unsigned int i = pos; i < source.length(); i++){
+        if(!isSimilar(source[i])){
+            if(isTargetChar(source[i])){
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    std::cout << "[ isNext(source: \'" << source  << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
+ 
+    return false;
+};
+
+static inline bool isNext(const std::string& source, unsigned int pos, std::function<bool(char)> isSimilar, std::function<bool(char)> isTargetChar, unsigned int& out_len){
+    for(unsigned int i = pos; i < source.length(); i++){
+        if(!isSimilar(source[i])){
+            if(isTargetChar(source[i])){
+                out_len = i - pos;
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    std::cout << "[ isNext(source: \'" << source  << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
+ 
+    return false;
+};
 static inline bool isNext(const std::string& source, unsigned int pos, std::function<bool(char)> isTargetChar, unsigned int& out_len){
     for(unsigned int i = pos; i < source.length(); i++){
         if(source[i] != source[pos]){
@@ -59,7 +89,7 @@ void Function::printOpState(const Element::operationState* const opState, bool a
         std::cout << "{";
         for(auto v : opState->opLevels){
             std::cout << "{ ";
-            for(char c : v){
+            for(std::string c : v){
                 std::cout << "'" << c << "',";
             }
             std::cout << "},\n";
@@ -120,7 +150,10 @@ Function::Function(const std::string& source) noexcept {
         auto elementContainer = getElementAt(i, source, latest);
         if(elementContainer.successfulParse == true){
             // If we successfully found an element, put it into our data buffer.
-            this->_data.push_back(elementContainer.elem);
+            for(auto elem : elementContainer.elements){
+                this->_data.push_back(elem);
+            }
+            // this->_data.push_back(elementContainer.elem);
             if(this->debugMode){
                 std::cout << "[Function]: data buf looks like: ";
                 if(_data[0]){
@@ -158,6 +191,17 @@ Function::Function(const std::string& source) noexcept {
             std::cout << "[FUNCTION::FUNCTION(" << source << ")]: Couldn't parse from char \'" << source[i] << " at {" << i <<  "}. Parse error.\n";
         }
     }
+    // Post-parse run through.
+    for(unsigned int i = 0; i < _data.size()-1; i++){
+        // if(_data[i]->getType() == 'b' && _data[i+1]->getType() == 'b'){
+            // this->_data.insert(_data.begin()+i+1, std::make_shared<OperatorElement>('*'));
+        // }
+        if((_data[i]->getType() == 'n' || _data[i]->getType() == 'v' || _data[i]->getType() == 'b')
+        && (_data[i+1]->getType() == 'n' || _data[i+1]->getType() == 'v' || _data[i+1]->getType() == 'b')){
+            this->_data.insert(_data.begin()+i+1, std::make_shared<OperatorElement>('*'));
+        } 
+        i++;
+    }
 };
 
 float Function::call(std::map<char, float> varMap) const noexcept {
@@ -165,7 +209,7 @@ float Function::call(std::map<char, float> varMap) const noexcept {
     // Go through each operation level (aka go down BIDMAS),
     for(auto operationLevel : Element::operationState::opLevels){
         opState.executionLevel = operationLevel;
-        // printOpState(&opState, false);
+        // printOpState(&opState, true);
         // While we're scanning within the bounds of our list of elements,
         while(opState.scanPosition < (opState.data.size()-1)){
             // Call each element, so that the operators can carry out their corresponding actions.
@@ -180,6 +224,7 @@ float Function::call(std::map<char, float> varMap) const noexcept {
     // printOpState(&opState, true);
 
     // Return the value of the final single element.
+    opState.isValueCall = true;
     return opState.data[0]->call(&opState);
 };
 
@@ -202,7 +247,7 @@ Function::elemContainer Function::getElementAt(unsigned int pos, const std::stri
     if(source[pos] == '('){
         auto lenOfBracketExpression = matchBracket(source, pos) - pos;
         auto bracketExpressionFunc = std::make_shared<Function>(source.substr(pos+1, lenOfBracketExpression-1));
-        return elemContainer(true, std::make_shared<BracketElement>(bracketExpressionFunc), lenOfBracketExpression+1, {false, true} );
+        return elemContainer(true, {std::make_shared<BracketElement>(bracketExpressionFunc)}, lenOfBracketExpression+1, {false, true} );
     }
     if (isNumeric(source, pos, latest)){
         std::string buf;
@@ -229,26 +274,28 @@ Function::elemContainer Function::getElementAt(unsigned int pos, const std::stri
             if(nOfNegatives % 2){ // In this case, buf.length()
                 // Odd number of negatives
                 buf.erase(std::remove(buf.begin()+1, buf.end(), '-'), buf.end());
-                return elemContainer(true, std::make_shared<NumericElement>(std::stof(buf)), buf.length() + nOfNegatives - 1, {false, true});
-                
+                return elemContainer(true, {std::make_shared<NumericElement>(std::stof(buf))}, buf.length() + nOfNegatives - 1, {false, true});
             }
             else { // In this case, buf.length() + nOfNegatives
                 buf.erase(std::remove(buf.begin(), buf.end(), '-'), buf.end());
-                return elemContainer(true, std::make_shared<NumericElement>(std::stof(buf)), buf.length() + nOfNegatives, {false, true});
+                return elemContainer(true, {std::make_shared<NumericElement>(std::stof(buf))}, buf.length() + nOfNegatives, {false, true});
             }
         }
-        return elemContainer(true, std::make_shared<NumericElement>(std::stof(buf)), buf.length(), {false, true});
+        return elemContainer(true, {std::make_shared<NumericElement>(std::stof(buf))}, buf.length(), {false, true});
     }
     // Pass in end pointer.
-	else if (isVariable(pos, source, latest)) {
+    auto element = elemContainer(false, {std::make_shared<Element>()}, 1, {false, false});
+       
+	else if (auto element = elemContainer(false, {std::make_shared<Element>()}, 1, {false, false});
+     isVariable(pos, source, latest, element)) {
 		if (source[pos] == '-') {
             unsigned int nOfNegatives = 0; isNext(source, pos, namesVar, nOfNegatives);
             if(nOfNegatives % 2){
-                return elemContainer(true, std::make_shared<VariableElement>(source[pos + nOfNegatives], 0), 1 + nOfNegatives, {false, true});
+                return elemContainer(true, {std::make_shared<VariableElement>(source[pos + nOfNegatives], 0)}, 1 + nOfNegatives, {false, true});
             }
-			return elemContainer(true, std::make_shared<VariableElement>(source[pos + nOfNegatives], 1), 1 + nOfNegatives, {false, true});
+			return elemContainer(true, {std::make_shared<VariableElement>(source[pos + nOfNegatives], 1)}, 1 + nOfNegatives, {false, true});
 		}
-		return elemContainer(true, std::make_shared<VariableElement>(source[pos], 1), 1, {false, true});
+		return elemContainer(true, {std::make_shared<VariableElement>(source[pos], 1)}, 1, {false, true});
 	}
     else { // HACK: can't get if-init working
         elemContainer elem = getOperator(pos, source, latest);
@@ -256,21 +303,17 @@ Function::elemContainer Function::getElementAt(unsigned int pos, const std::stri
             return elem;
         }
         else {
-            return elemContainer(false, std::make_shared<Element>(), 1, {false, false});
+            return elemContainer(false, {std::make_shared<Element>()}, 1, {false, false});
         }
     }
 };
 
 inline Function::elemContainer Function::getOperator(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) noexcept {
-    std::cout << "[getOperator(" << pos << ", " << source << ", latestValType:" << latest.isValueType << ")]\n";
     for(unsigned int i = 0; i < Function::nOfOperators; i++){
         // If we this character is found in our opSet, and the context suggests it can be an operator
         if(operatorSet.count(source[pos])){
             if(latest.isValueType){
-                std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] isValueType.\n";
                 if(source[pos] == '-' && source[pos+1] == '-'){
-                    std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] next is a -, continuing.\n";
-
                     if(source[pos] != '-'){
                         std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] Found char in opSet, latest is ValueType and next char is a negative, but we aren't a negative - is this an error? Please report.\n";
                     }
@@ -278,21 +321,26 @@ inline Function::elemContainer Function::getOperator(unsigned int pos, const std
                     unsigned int index = 0;
                     while(source[pos + 2 + index] == '-'){
                         nOfNegatives++; index++;
-                        std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] found another -, index = " << index << ", nOfNegatives = " << nOfNegatives << ".\n";
                     }
                     if(nOfNegatives % 2){
-                        return elemContainer(true, std::make_shared<OperatorElement>('-'), nOfNegatives, {true, false});
+                        return elemContainer(true, {std::make_shared<OperatorElement>('-')}, nOfNegatives, {true, false});
                     }
                     else {
-                         return elemContainer(true, std::make_shared<OperatorElement>('+'), nOfNegatives, {true, false});
+                         return elemContainer(true, {std::make_shared<OperatorElement>('+')}, nOfNegatives, {true, false});
                     }
                 }
-                return elemContainer(true, std::make_shared<OperatorElement>(source[pos]), 1, {true, false});
+                return elemContainer(true, {std::make_shared<OperatorElement>(source[pos])}, 1, {true, false});
             }
-            return elemContainer(false, std::make_shared<OperatorElement>('0'), 1, {false, false});
+            else if(source[pos] == '-' || source[pos] == '+'){ // TODO: figure out if the second condition is necesary
+                if(pos == 0){
+                    return elemContainer(true, {std::make_shared<NumericElement>(0.0f),std::make_shared<OperatorElement>(source[pos])}, 1, {true, false});
+                }
+                return elemContainer(true, {std::make_shared<OperatorElement>(source[pos])}, 1, {true, false});
+            }
+            return elemContainer(false, {std::make_shared<OperatorElement>('0')}, 1, {false, false});
         }
     }
-    return elemContainer(false, std::make_shared<OperatorElement>('0'), 1, {false, false});
+    return elemContainer(false, {std::make_shared<OperatorElement>('0')}, 1, {false, false});
 };
 
 
@@ -333,11 +381,22 @@ static inline unsigned int findNumberEnd(unsigned int start, const std::string& 
     return start+len;
 };
 
-inline bool Function::isVariable(unsigned int pos, const std::string& source, elemContainer::parsedElem latest) noexcept {
-    if(source[pos] == '-' && isNext(source, pos, namesVar) && !latest.isValueType){
-        return true; // e.g. 7*-x
-    } 
+inline bool Function::isVariable(unsigned int pos, const std::string& source, elemContainer::parsedElem latest, elemContainer& element_out) noexcept {
+    if(source[pos] == '-' && isNext(source, pos, namesVar) && !latest.isValueType && source[pos+2] != '^'){
+        return true; // e.g. 7*-x but not -x^2
+    }
     if(namesVar(source[pos])){
+        unsigned int len;
+        bool followedByBracket = isNext(source, pos, namesVar, [](char c){ return c == '('; }, len);
+        std::cout << source[pos] << "NAMES A VAR, len=" << len << " and followedByBracket=" << followedByBracket << "\n";
+        if(Element::operationState::signatureToFuncMap.count(source.substr(pos, len)) && followedByBracket){
+            element_out.successfulParse = true;
+            element_out.elements.erase(element_out.elements.begin());
+            element_out.elements.push_back(std::make_shared<OperatorElement>(source.substr(pos, len)));
+            element_out.elemLength = len;
+            element_out.latestElem = {true, false};
+            return false; // Can be read as a function call, so that takes priority.
+        }
         return true;
     } else {
         return false;

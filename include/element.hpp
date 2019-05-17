@@ -14,7 +14,7 @@ class Element {
 public:      
     struct operationState {
         // A list of the operations we do at each execution level, for example, one level includes addition and subtraction. This is iterated through in order to carry out calculations following the correct order.
-        static const std::vector<std::vector<char>> opLevels;
+        static const std::vector<std::vector<std::string>> opLevels;
 
         // A vec of shared_ptrs to our actual elements that comprise the function.
         std::vector<std::shared_ptr<Element>> data;
@@ -22,11 +22,13 @@ public:
         // Stores the values passed into the function call for any and all variables in the expression e.g. the current value of x
         std::map<char, float> variableValues;
 
+        static std::map<std::string, std::function<float(float, float)>> signatureToFuncMap;
+           
         // Where we are in the element vec (index)
         unsigned int scanPosition = 0;
 
         // This takes values from operationState::opLevels - represents which operations we're currently concerned with.
-        std::vector<char> executionLevel;
+        std::vector<std::string> executionLevel;
 
         // A boolean to tell computationally expensive value types to only compute if an operator calls them.
         // E.g., when calling a function, every element is called. These are not value calls, so that computationally expensive elements do not run needlessly.
@@ -37,6 +39,8 @@ public:
     virtual std::string toString() const noexcept;
 
     virtual float call(operationState* opState) const noexcept;
+
+    virtual char getType() const noexcept;
 
     static float binaryOperation(float val, operationState* opState) noexcept;
 };
@@ -50,17 +54,22 @@ public:
 
     std::string toString() const noexcept override;
 
+    char getType() const noexcept override;
+
     float call(operationState* opState) const noexcept override;
 };
 
 // The Element type that represents an operator (+, -, ^, sin()) in our function. Currently only does one character ops.
 class OperatorElement : public Element {
 private:
-    char _data;
+    std::string _data;
 public:
-    OperatorElement(char source) : _data(source) {};
+    OperatorElement(std::string source) : _data(source) {};
+    OperatorElement(char csource) { std::stringstream ss; ss << csource; _data = ss.str(); }
 
     std::string toString() const noexcept override;
+
+    char getType() const noexcept override;
 
     // TODO: Gotta get cleaned up.
     float call(operationState* opState) const noexcept override;
@@ -76,6 +85,8 @@ public:
 
     std::string toString() const noexcept override;
 
+    char getType() const noexcept override;
+
     float call(operationState* opState) const noexcept override;
 };
 
@@ -90,6 +101,8 @@ public:
     BracketElement(std::shared_ptr<Function> func) : _data(func) {};
 
     std::string toString() const noexcept override;
+
+    char getType() const noexcept override;
 
     float call(operationState* opState) const noexcept override;
 };

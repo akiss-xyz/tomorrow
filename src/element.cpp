@@ -2,11 +2,22 @@
 
 #include "function.hpp"
 
-const std::vector<std::vector<char>> Element::operationState::opLevels = {
+const std::vector<std::vector<std::string>> Element::operationState::opLevels = {
 //    {'(', ')'},
-    {'^'},
-    {'*', '/'},
-    {'+', '-'},
+    {"^"},
+    {"*", "/"},
+    {"+", "-"},
+};
+
+std::map<std::string, std::function<float(float, float)>> Element::operationState::signatureToFuncMap = {
+        {"+", [](float lhs, float rhs){ return lhs+rhs;} },
+        {"-", [](float lhs, float rhs){ return lhs-rhs;} },
+        {"*", [](float lhs, float rhs){ return lhs*rhs;} },
+        {"/", [](float lhs, float rhs){ return lhs/rhs;} },
+        {"^", [](float lhs, float rhs){ return pow(lhs, rhs);} },
+        {"sin", [](float lhs, float rhs){ return sin(rhs);} },
+        {"cos", [](float lhs, float rhs){ return cos(rhs);} },
+        {"tan", [](float lhs, float rhs){ return tan(rhs);} },
 };
 
 /* Element methods */
@@ -15,6 +26,9 @@ std::string Element::toString() const noexcept {
     return "Element{}";
 };
 
+char Element::getType() const noexcept {
+    return 'e';
+};
 
 float Element::call(operationState* opState) const noexcept {
     std::cout << "[POTENTIAL ERROR]: Someone tried to call a base class element.\n";
@@ -47,6 +61,10 @@ std::string NumericElement::toString() const noexcept {
     return ss.str();
 };
 
+char NumericElement::getType() const noexcept {
+    return 'n';
+};
+
 
 float NumericElement::call(operationState* opState) const noexcept {
     return _data;
@@ -60,9 +78,23 @@ std::string OperatorElement::toString() const noexcept {
     return ss.str();
 };
 
+char OperatorElement::getType() const noexcept {
+    return 'o';
+};
+
+
 float OperatorElement::call(operationState* opState) const noexcept {
+    std::map<std::string, std::function<float(float, float)>> signatureToFuncMap;
     if(std::find(opState->executionLevel.begin(), opState->executionLevel.end(), _data) != opState->executionLevel.end()){
         opState->isValueCall = true;
+        auto value = opState->signatureToFuncMap.at(_data)(
+            opState->data.at(opState->scanPosition-1)->call(opState),   // Value of lhs
+            opState->data.at(opState->scanPosition+1)->call(opState)    // Value of rhs   
+        );
+
+        return binaryOperation(value, opState);
+
+        /*
         // If we're on the execution level we're concerned with.
         switch(_data){
             case '+':
@@ -100,6 +132,7 @@ float OperatorElement::call(operationState* opState) const noexcept {
                 return 0.0f;
                 break;
         }
+        */
     }
     // TODO: Is this an error? Should we carry out the operation without changing the opState->data?
     // Testing on f(x) = (x^2)*(x^2), this works but complains. Muting for now.
@@ -119,6 +152,11 @@ std::string VariableElement::toString() const noexcept {
     } 
     return ss.str();
 };
+
+char VariableElement::getType() const noexcept {
+    return 'v';
+};
+
 
 float VariableElement::call(operationState* opState) const noexcept {
     if(opState->variableValues.find(_data) != opState->variableValues.end()){
@@ -142,6 +180,11 @@ std::string BracketElement::toString() const noexcept {
     ss << "BracketElement{" << _data->toString() << "}";
     return ss.str();
 };
+
+char BracketElement::getType() const noexcept {
+    return 'b';
+};
+
 
 float BracketElement::call(operationState* opState) const noexcept {
     if(opState->isValueCall){

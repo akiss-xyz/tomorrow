@@ -19,7 +19,7 @@ endif()
 add_executable(tomorrow ${SOURCES})
     
 if( CMAKE_HOST_UNIX )
-    # X11 libraries for GUI functionality
+    # X11 libraries for GUI functionality, used by cimg.h
     find_package(X11 REQUIRED)
     # message(STATUS "X11_FOUND = ${X11_FOUND}")
     # message(STATUS "X11_INCLUDE_DIR = ${X11_INCLUDE_DIR}")

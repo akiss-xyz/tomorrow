@@ -121,7 +121,7 @@ public:
     struct elemContainer {
     public:
         bool successfulParse;
-        std::shared_ptr<Element> elem;
+        std::vector<std::shared_ptr<Element>> elements;
         unsigned int elemLength = 1;
  
         struct parsedElem {
@@ -130,8 +130,8 @@ public:
             bool isValueType = false;
         } latestElem;
 
-        elemContainer(bool isSuccessful, std::shared_ptr<Element> element, unsigned int elemLen, parsedElem parse)
-        : successfulParse(isSuccessful), elem(element), elemLength(elemLen), latestElem(parse) {};
+        elemContainer(bool isSuccessful, std::vector<std::shared_ptr<Element>> element, unsigned int elemLen, parsedElem parse)
+        : successfulParse(isSuccessful), elements(element), elemLength(elemLen), latestElem(parse) {};
     };
 
 private:
