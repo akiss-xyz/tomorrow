@@ -3,47 +3,53 @@
 #include "function.hpp"
 
 const std::vector<std::vector<std::string>> Element::operationState::opLevels = {
-//    {'(', ')'},
+    //    {'(', ')'},
     {"^"},
     {"*", "/"},
     {"+", "-"},
 };
 
 std::map<std::string, std::function<float(float, float)>> Element::operationState::signatureToFuncMap = {
-        {"+", [](float lhs, float rhs){ return lhs+rhs;} },
-        {"-", [](float lhs, float rhs){ return lhs-rhs;} },
-        {"*", [](float lhs, float rhs){ return lhs*rhs;} },
-        {"/", [](float lhs, float rhs){ return lhs/rhs;} },
-        {"^", [](float lhs, float rhs){ return pow(lhs, rhs);} },
-        {"sin", [](float lhs, float rhs){ return sin(rhs);} },
-        {"cos", [](float lhs, float rhs){ return cos(rhs);} },
-        {"tan", [](float lhs, float rhs){ return tan(rhs);} },
+    {"+", [](float lhs, float rhs) { return lhs + rhs; }},
+    {"-", [](float lhs, float rhs) { return lhs - rhs; }},
+    {"*", [](float lhs, float rhs) { return lhs * rhs; }},
+    {"/", [](float lhs, float rhs) { return lhs / rhs; }},
+    {"^", [](float lhs, float rhs) { return pow(lhs, rhs); }},
+    {"sin", [](float lhs, float rhs) { return sin(rhs); }},
+    {"cos", [](float lhs, float rhs) { return cos(rhs); }},
+    {"tan", [](float lhs, float rhs) { return tan(rhs); }},
 };
 
 /* Element methods */
 
-std::string Element::toString() const noexcept {
+std::string Element::toString() const noexcept
+{
     return "Element{}";
 };
 
-char Element::getType() const noexcept {
+char Element::getType() const noexcept
+{
     return 'e';
 };
 
-float Element::call(operationState* opState) const noexcept {
+float Element::call(operationState *opState) const noexcept
+{
     std::cout << "[POTENTIAL ERROR]: Someone tried to call a base class element.\n";
     return 0.0f;
 };
 
-float Element::binaryOperation(float val, operationState* opState) noexcept {
+float Element::binaryOperation(float val, operationState *opState) noexcept
+{
     // How does this work if scanPosition = 0?
-    opState->data.erase(opState->data.begin() + opState->scanPosition-1, opState->data.begin() + opState->scanPosition+2);
-    if (opState->scanPosition <= 1) {
+    opState->data.erase(opState->data.begin() + opState->scanPosition - 1, opState->data.begin() + opState->scanPosition + 2);
+    if (opState->scanPosition <= 1)
+    {
         // This has to be either an exempt call (by either an outside source or another element) or an operator at the start of a func, hence we need to handle insertion differently.
         opState->data.insert(opState->data.begin(), std::make_shared<NumericElement>(val));
         opState->scanPosition -= 1;
     }
-    else {
+    else
+    {
         opState->scanPosition -= 1;
         // deleted - 1
         opState->data.insert(opState->data.begin() + opState->scanPosition, std::make_shared<NumericElement>(val));
@@ -53,46 +59,78 @@ float Element::binaryOperation(float val, operationState* opState) noexcept {
     return val;
 };
 
+float Element::unaryOperation(float val, operationState *opState) noexcept
+{
+    return val;
+};
+
 /* NumericElement methods */
 
-std::string NumericElement::toString() const noexcept {
+std::string NumericElement::toString() const noexcept
+{
     std::stringstream ss;
     ss << "NumericElement{" << _data << "}";
     return ss.str();
 };
 
-char NumericElement::getType() const noexcept {
+char NumericElement::getType() const noexcept
+{
     return 'n';
 };
 
-
-float NumericElement::call(operationState* opState) const noexcept {
+float NumericElement::call(operationState *opState) const noexcept
+{
     return _data;
 };
 
 /* OperatorElement methods */
 
-std::string OperatorElement::toString() const noexcept {
+std::string OperatorElement::toString() const noexcept
+{
     std::stringstream ss;
     ss << "OperatorElement{" << _data << "}";
     return ss.str();
 };
 
-char OperatorElement::getType() const noexcept {
+char OperatorElement::getType() const noexcept
+{
     return 'o';
 };
 
-
-float OperatorElement::call(operationState* opState) const noexcept {
-    std::map<std::string, std::function<float(float, float)>> signatureToFuncMap;
-    if(std::find(opState->executionLevel.begin(), opState->executionLevel.end(), _data) != opState->executionLevel.end()){
+float OperatorElement::call(operationState *opState) const noexcept
+{
+    std::cout << "Calling opelement " << this->_data << "\n";
+ //   if (std::find(opState->executionLevel.begin(), opState->executionLevel.end(), _data) != opState->executionLevel.end())
+    if (auto func = operationState::signatureToFuncMap.at(_data); func)
+    {
+        std::cout << "found func \n";
         opState->isValueCall = true;
-        auto value = opState->signatureToFuncMap.at(_data)(
-            opState->data.at(opState->scanPosition-1)->call(opState),   // Value of lhs
-            opState->data.at(opState->scanPosition+1)->call(opState)    // Value of rhs   
-        );
-
-        return binaryOperation(value, opState);
+        float value;
+        if (opState->scanPosition == 0)
+        {
+            value = func(
+                0.0f,
+                opState->data.at(opState->scanPosition + 1)->call(opState)  // Value of rhs
+            );
+        }
+        else
+        {
+            value = func(
+                opState->data.at(opState->scanPosition - 1)->call(opState), // Value of lhs
+                opState->data.at(opState->scanPosition + 1)->call(opState)  // Value of rhs
+            );
+        }
+        std::cout << "GOT THE VAL" << value << " from x= " << opState->variableValues.at('x') << "\n";
+        std::cout << "SANITY CHECK RHS = " << opState->data.at(opState->scanPosition + 1)->call(opState) << " | sin rhs = " << sin((double)opState->data.at(opState->scanPosition + 1)->call(opState)) << "\n";
+        if (_data.length() == 1)
+        {
+            return binaryOperation(value, opState);
+        }
+        else
+        {
+            std::cout << "... RETURNING WITH UNARYOP";
+            return unaryOperation(value, opState);
+        }
 
         /*
         // If we're on the execution level we're concerned with.
@@ -142,32 +180,40 @@ float OperatorElement::call(operationState* opState) const noexcept {
 
 /* VariableElement methods */
 
-std::string VariableElement::toString() const noexcept {
+std::string VariableElement::toString() const noexcept
+{
     std::stringstream ss;
-    if(_sign){
+    if (_sign)
+    {
         ss << "VariableElement{" << _data << "}";
     }
-    else{
-         ss << "VariableElement{-" << _data << "}";
-    } 
+    else
+    {
+        ss << "VariableElement{-" << _data << "}";
+    }
     return ss.str();
 };
 
-char VariableElement::getType() const noexcept {
+char VariableElement::getType() const noexcept
+{
     return 'v';
 };
 
-
-float VariableElement::call(operationState* opState) const noexcept {
-    if(opState->variableValues.find(_data) != opState->variableValues.end()){
-		if (_sign) {
-			return opState->variableValues[_data];
-		}
-		else {
-			return -1 * opState->variableValues[_data];
-		}
+float VariableElement::call(operationState *opState) const noexcept
+{
+    if (opState->variableValues.find(_data) != opState->variableValues.end())
+    {
+        if (_sign)
+        {
+            return opState->variableValues[_data];
+        }
+        else
+        {
+            return -1 * opState->variableValues[_data];
+        }
     }
-    else {
+    else
+    {
         // std::cout << "[VariableElement::call]: An unassigned (no value given in Function::call()) variable was queried for value.\n";
         return 0.0f;
     }
@@ -175,21 +221,23 @@ float VariableElement::call(operationState* opState) const noexcept {
 
 /* BracketElement methods */
 
-std::string BracketElement::toString() const noexcept {
+std::string BracketElement::toString() const noexcept
+{
     std::stringstream ss;
     ss << "BracketElement{" << _data->toString() << "}";
     return ss.str();
 };
 
-char BracketElement::getType() const noexcept {
+char BracketElement::getType() const noexcept
+{
     return 'b';
 };
 
-
-float BracketElement::call(operationState* opState) const noexcept {
-    if(opState->isValueCall){
+float BracketElement::call(operationState *opState) const noexcept
+{
+    if (opState->isValueCall)
+    {
         return _data->call(opState->variableValues);
     }
     return 0.0f;
 };
-
