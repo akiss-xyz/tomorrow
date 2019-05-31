@@ -32,7 +32,7 @@ char Element::getType() const noexcept
     return 'e';
 };
 
-float Element::call(operationState *opState) const noexcept
+float Element::call(operationState *opState, unsigned int selfPos) const noexcept
 {
     std::cout << "[POTENTIAL ERROR]: Someone tried to call a base class element.\n";
     return 0.0f;
@@ -78,7 +78,7 @@ char NumericElement::getType() const noexcept
     return 'n';
 };
 
-float NumericElement::call(operationState *opState) const noexcept
+float NumericElement::call(operationState *opState, unsigned int selfPos) const noexcept
 {
     return _data;
 };
@@ -94,41 +94,42 @@ std::string OperatorElement::toString() const noexcept
 
 char OperatorElement::getType() const noexcept
 {
-    return 'o';
+    if(_data.length() == 1){ // TODO: Have a way to tell whether an operator is unary or binary.
+        return 'o';
+    }
+    return 'u';
 };
 
-float OperatorElement::call(operationState *opState) const noexcept
+float OperatorElement::call(operationState *opState, unsigned int selfPos) const noexcept
 {
-    std::cout << "Calling opelement " << this->_data << "\n";
  //   if (std::find(opState->executionLevel.begin(), opState->executionLevel.end(), _data) != opState->executionLevel.end())
+    std::cout << "Calling opElem (" << _data << ") scanPos is ," << opState->scanPosition << ", selfPos is " << selfPos << "\n";
     if (auto func = operationState::signatureToFuncMap.at(_data); func)
     {
-        std::cout << "found func \n";
         opState->isValueCall = true;
         float value;
-        if (opState->scanPosition == 0)
+        if (selfPos == 0 || _data.length() != 1)
         {
             value = func(
                 0.0f,
-                opState->data.at(opState->scanPosition + 1)->call(opState)  // Value of rhs
+                opState->data.at(selfPos + 1)->call(opState, selfPos + 1) // Value of rhs
             );
         }
         else
         {
             value = func(
-                opState->data.at(opState->scanPosition - 1)->call(opState), // Value of lhs
-                opState->data.at(opState->scanPosition + 1)->call(opState)  // Value of rhs
+                opState->data.at(selfPos - 1)->call(opState, selfPos - 1), // Value of lhs
+                opState->data.at(selfPos + 1)->call(opState, selfPos + 1)  // Value of rhs
             );
         }
-        std::cout << "GOT THE VAL" << value << " from x= " << opState->variableValues.at('x') << "\n";
-        std::cout << "SANITY CHECK RHS = " << opState->data.at(opState->scanPosition + 1)->call(opState) << " | sin rhs = " << sin((double)opState->data.at(opState->scanPosition + 1)->call(opState)) << "\n";
         if (_data.length() == 1)
         {
+            // std::cout << "...returned binaryOp = " << unaryOperation(value, opState) << "\n";
             return binaryOperation(value, opState);
         }
         else
         {
-            std::cout << "... RETURNING WITH UNARYOP";
+            // std::cout << "...returned unaryOp = " << unaryOperation(value, opState) << "\n";
             return unaryOperation(value, opState);
         }
 
@@ -156,7 +157,7 @@ float OperatorElement::call(operationState *opState) const noexcept
             case '/':
             {
                 auto val = opState->data.at(opState->scanPosition-1)->call(opState) / opState->data.at(opState->scanPosition+1)->call(opState);
-                return binaryOperation(val, opState);
+               return binaryOperation(val, opState);
                 break;
             }
             case '^':
@@ -199,7 +200,7 @@ char VariableElement::getType() const noexcept
     return 'v';
 };
 
-float VariableElement::call(operationState *opState) const noexcept
+float VariableElement::call(operationState *opState, unsigned int selfPos) const noexcept
 {
     if (opState->variableValues.find(_data) != opState->variableValues.end())
     {
@@ -233,7 +234,7 @@ char BracketElement::getType() const noexcept
     return 'b';
 };
 
-float BracketElement::call(operationState *opState) const noexcept
+float BracketElement::call(operationState *opState, unsigned int selfPos) const noexcept
 {
     if (opState->isValueCall)
     {

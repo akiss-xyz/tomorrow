@@ -40,7 +40,7 @@ public:
 
     virtual std::string toString() const noexcept;
 
-    virtual float call(operationState *opState) const noexcept;
+    virtual float call(operationState* opState, unsigned int selfPos) const noexcept;
 
     virtual char getType() const noexcept;
 
@@ -62,7 +62,7 @@ public:
 
     char getType() const noexcept override;
 
-    float call(operationState *opState) const noexcept override;
+    float call(operationState *opState, unsigned int selfPos) const noexcept override;
 };
 
 // The Element type that represents an operator (+, -, ^, sin()) in our function. Currently only does one character ops.
@@ -73,6 +73,7 @@ private:
 
 public:
     OperatorElement(std::string source) : _data(source){};
+
     OperatorElement(char csource)
     {
         std::stringstream ss;
@@ -85,7 +86,7 @@ public:
     char getType() const noexcept override;
 
     // TODO: Gotta get cleaned up.
-    float call(operationState *opState) const noexcept override;
+    float call(operationState *opState, unsigned int selfPos) const noexcept override;
 };
 
 // Represents any constants or variables in a Function. Takes values from opState->variableValues.
@@ -102,7 +103,7 @@ public:
 
     char getType() const noexcept override;
 
-    float call(operationState *opState) const noexcept override;
+    float call(operationState *opState, unsigned int selfPos) const noexcept override;
 };
 
 // Forward Declaration of Function: Promise the Bracketelement class that the Function class exists
@@ -120,5 +121,5 @@ public:
 
     char getType() const noexcept override;
 
-    float call(operationState *opState) const noexcept override;
+    float call(operationState *opState, unsigned int selfPos) const noexcept override;
 };

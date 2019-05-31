@@ -14,7 +14,7 @@
 class Function
 {
 public:
-    bool debugMode = true;
+    bool debugMode = false;
     void printOpState(const Element::operationState *const opState, bool all) const noexcept;
     std::string toString() const noexcept;
 
@@ -45,6 +45,7 @@ public:
     auto gradientStepFunction(const std::pair<point, point> latestPoints, float xstep, float ystep, int l_value) const noexcept
     {
         auto pointsToDraw = std::make_shared<std::vector<point>>();
+
         auto getDistance = [](point a, point b) -> float {
             point a_b;
             if (a.x > b.x)
@@ -70,9 +71,11 @@ public:
                 pow(a_b.x, 2) + pow(a_b.y, 2),
                 0.5f);
         };
+
         auto isWithinDistance = [getDistance](float distance, point a, point b) -> bool {
             return distance >= getDistance(a, b);
         };
+
         for (int i = 0; i <= 2 * l_value; i++)
         {
             point p;

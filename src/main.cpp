@@ -35,7 +35,7 @@ int main()
         else
         {
             Function f(source);
-            f.plot(&img, fColour, 3, std::make_pair(-180, 180), std::make_pair(-5, 5))->display(display);
+            f.plot(&img, fColour, 3, std::make_pair(-3.14159*3, 3.14159*3), std::make_pair(-5, 5))->display(display);
        }
     }
 

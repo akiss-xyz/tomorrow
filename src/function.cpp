@@ -120,7 +120,6 @@ inline bool Function::isVariable(unsigned int pos, const std::string &source, el
     {
         unsigned int len;
         bool followedByBracket = isNext(source, pos, namesVar, [](char c) { return c == '('; }, len);
-        std::cout << source[pos] << "NAMES A VAR, len=" << len << " and followedByBracket=" << followedByBracket << "\n";
         if (Element::operationState::signatureToFuncMap.count(source.substr(pos, len)) && followedByBracket)
         {
             element_out.successfulParse = true;
@@ -280,11 +279,30 @@ Function::Function(const std::string &source) noexcept
         // if(_data[i]->getType() == 'b' && _data[i+1]->getType() == 'b'){
         // this->_data.insert(_data.begin()+i+1, std::make_shared<OperatorElement>('*'));
         // }
-        if ((_data[i]->getType() == 'n' || _data[i]->getType() == 'v' || _data[i]->getType() == 'b') && (_data[i + 1]->getType() == 'n' || _data[i + 1]->getType() == 'v' || _data[i + 1]->getType() == 'b'))
+        if ((_data[i]->getType() == 'n' || _data[i]->getType() == 'v' || _data[i]->getType() == 'b') && (_data[i + 1]->getType() == 'n' || _data[i + 1]->getType() == 'v' || _data[i + 1]->getType() == 'b' || _data[i+1]->getType() == 'u'))
         {
             this->_data.insert(_data.begin() + i + 1, std::make_shared<OperatorElement>('*'));
         }
         i++;
+    }
+    if (this->debugMode)
+    {
+        std::cout << "[Function]: final, post-reprocess data buf looks like: ";
+        if (_data[0])
+        {
+            std::cout << "[data]: \n";
+            for (auto v : _data)
+            {
+                if (v)
+                {
+                    std::cout << v->toString() << ",\n";
+                }
+                else
+                {
+                    std::cout << "[FAULT]: VOID POINTER-TO-ELEMENT IN OPSTATE->DATA\n";
+                }
+            }
+        }
     }
 };
 
@@ -301,7 +319,7 @@ float Function::call(std::map<char, float> varMap) const noexcept
         {
             // Call each element, so that the operators can carry out their corresponding actions.
             // printOpState(&opState, true);
-            opState.data[opState.scanPosition]->call(&opState);
+            opState.data[opState.scanPosition]->call(&opState, opState.scanPosition);
             opState.scanPosition++;
         }
         // Reset the scanPosition so that the next operationLevel starts at the start.
@@ -312,7 +330,7 @@ float Function::call(std::map<char, float> varMap) const noexcept
 
     // Return the value of the final single element.
     opState.isValueCall = true;
-    return opState.data[0]->call(&opState);
+    return opState.data[0]->call(&opState, opState.scanPosition);
 };
 
 // Bracket utility functions
