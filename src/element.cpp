@@ -103,7 +103,7 @@ char OperatorElement::getType() const noexcept
 float OperatorElement::call(operationState *opState, unsigned int selfPos) const noexcept
 {
  //   if (std::find(opState->executionLevel.begin(), opState->executionLevel.end(), _data) != opState->executionLevel.end())
-    std::cout << "Calling opElem (" << _data << ") scanPos is ," << opState->scanPosition << ", selfPos is " << selfPos << "\n";
+    // std::cout << "Calling opElem (" << _data << ") scanPos is ," << opState->scanPosition << ", selfPos is " << selfPos << "\n";
     if (auto func = operationState::signatureToFuncMap.at(_data); func)
     {
         opState->isValueCall = true;

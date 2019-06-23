@@ -40,7 +40,7 @@ static inline bool isNext(const std::string &source, unsigned int pos, std::func
             }
         }
     }
-    std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
+    // std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
 
     return false;
 }
@@ -61,7 +61,7 @@ static inline bool isNext(const std::string &source, unsigned int pos, std::func
             }
         }
     }
-    std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
+    // std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
 
     return false;
 };
@@ -83,7 +83,7 @@ static inline bool isNext(const std::string &source, unsigned int pos, std::func
             }
         }
     }
-    std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
+    // std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
 
     return false;
 };
@@ -105,7 +105,7 @@ static inline bool isNext(const std::string &source, unsigned int pos, std::func
             }
         }
     }
-    std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
+    // std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
 
     return false;
 }
@@ -153,7 +153,7 @@ void Function::printOpState(const Element::operationState *const opState, bool a
             for (std::string c : v)
             {
                 std::cout << "'" << c << "',";
-            }
+           }
             std::cout << "},\n";
         }
 
