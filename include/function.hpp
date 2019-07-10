@@ -100,7 +100,9 @@ public:
         // Variable map - what values we have defined as accessible as keys and values to VariableElements
         std::map<char, float> varMap = {
             {'x', 0.0f},
-            {'p', 3.14159f}};
+            {'p', 3.14159f},
+            {'e', 2.71828f},
+        };
 
         std::pair<point, point> latestPoints; // The last two points we plotted.
 

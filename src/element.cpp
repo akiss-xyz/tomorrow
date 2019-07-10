@@ -18,6 +18,7 @@ std::map<std::string, std::function<float(float, float)>> Element::operationStat
     {"sin", [](float lhs, float rhs) { return sin(rhs); }},
     {"cos", [](float lhs, float rhs) { return cos(rhs); }},
     {"tan", [](float lhs, float rhs) { return tan(rhs); }},
+    {"ln", [](float lhs, float rhs) { return log(rhs); }},
 };
 
 /* Element methods */

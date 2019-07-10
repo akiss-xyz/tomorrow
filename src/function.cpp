@@ -10,7 +10,8 @@ static constexpr inline bool isDigit(char c) noexcept
     {
         return false;
     }
-}
+};
+
 
 static inline bool namesVar(char c) noexcept
 {
@@ -23,6 +24,7 @@ static inline bool namesVar(char c) noexcept
         return false;
     }
 };
+
 
 static inline bool isNext(const std::string &source, unsigned int pos, std::function<bool(char)> isTargetChar)
 {
@@ -43,7 +45,7 @@ static inline bool isNext(const std::string &source, unsigned int pos, std::func
     // std::cout << "[ isNext(source: \'" << source << "\', pos: \'" << pos << "\') ]: Entire rest of string from pos only contains the start char.\n";
 
     return false;
-}
+};
 
 static inline bool isNext(const std::string &source, unsigned int pos, std::function<bool(char)> isSimilar, std::function<bool(char)> isTargetChar)
 {
@@ -438,55 +440,6 @@ Function::elemContainer Function::getElementAt(unsigned int pos, const std::stri
         }
     }
 };
-
-/*
-inline Function::elemContainer Function::getOperator(unsigned int pos, const std::string &source, elemContainer::parsedElem latest) noexcept
-{
-    for (unsigned int i = 0; i < Function::nOfOperators; i++)
-    {
-        // If we this character is found in our opSet, and the context suggests it can be an operator
-        if (operatorSet.count(source[pos]))
-        {
-            if (latest.isValueType)
-            {
-                if (source[pos] == '-' && source[pos + 1] == '-')
-                {
-                    if (source[pos] != '-')
-                    {
-                        std::cout << "[ Function::getOperator(" << pos << ", " << source << ")] Found char in opSet, latest is ValueType and next char is a negative, but we aren't a negative - is this an error? Please report.\n";
-                    }
-                    unsigned int nOfNegatives = 2;
-                    unsigned int index = 0;
-                    while (source[pos + 2 + index] == '-')
-                    {
-                        nOfNegatives++;
-                        index++;
-                    }
-                    if (nOfNegatives % 2)
-                    {
-                        return elemContainer(true, {std::make_shared<OperatorElement>('-')}, nOfNegatives, {true, false});
-                    }
-                    else
-                    {
-                        return elemContainer(true, {std::make_shared<OperatorElement>('+')}, nOfNegatives, {true, false});
-                    }
-                }
-                return elemContainer(true, {std::make_shared<OperatorElement>(source[pos])}, 1, {true, false});
-            }
-            else if (source[pos] == '-' || source[pos] == '+')
-            { // TODO: figure out if the second condition is necesary
-                if (pos == 0)
-                {
-                    return elemContainer(true, {std::make_shared<NumericElement>(0.0f), std::make_shared<OperatorElement>(source[pos])}, 1, {true, false});
-                }
-                return elemContainer(true, {std::make_shared<OperatorElement>(source[pos])}, 1, {true, false});
-            }
-            return elemContainer(false, {std::make_shared<OperatorElement>('0')}, 1, {false, false});
-        }
-    }
-    return elemContainer(false, {std::make_shared<OperatorElement>('0')}, 1, {false, false});
-};
-*/
 
 inline Function::elemContainer Function::getOperator(unsigned int pos, const std::string &source, elemContainer::parsedElem latest) noexcept
 {

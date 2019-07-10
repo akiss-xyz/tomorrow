@@ -11,11 +11,19 @@
 
 int main()
 {
-    Image img(700, 700, 1, 3);
+    const int imageHeight = 700;
+    const int imageWidth = 700;
+    //                              Between -3pi and 3pi, so that trig functions look good.
+    const auto yRange = std::make_pair(-3.14159*3, 3.14159*3);
+    //                              Between -5 and 5 on the x-axis.
+    const auto xRange = std::make_pair(-5, 5);
+
+    Image img(imageWidth, imageHeight, 1, 3);
     cimg::CImgDisplay display(*img.image, "Tomorrow");
 
     unsigned char fColour[3] = {255, 0, 0};
     unsigned char axesColour[3] = {255, 255, 255};
+
     img.drawAxes(axesColour);
     img.image->display(display);
 
@@ -35,7 +43,7 @@ int main()
         else
         {
             Function f(source);
-            f.plot(&img, fColour, 3, std::make_pair(-3.14159*3, 3.14159*3), std::make_pair(-5, 5))->display(display);
+            f.plot(&img, fColour, 3, yRange, xRange)->display(display);
        }
     }
 
