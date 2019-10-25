@@ -5,4 +5,4 @@ A small learning project to develop a simple, 2D, cross-platform graphing calcul
 We're all new devs, and we welcome anyone who's interested in contributing - say hi, ask questions, help out on some issues - we try not to bite.
 
 ### Usage instructions
-See USAGE.md
+See [USAGE.md](USAGE.md)
