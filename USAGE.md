@@ -1,3 +1,5 @@
+## Usage Instructions
+
 Compile the project using the compiler of your choice, using the included build and run scripts for your operating system.
 You'll find the build files in the default CMake folder, PROJECT_ROOT/build/x64-*/
 
