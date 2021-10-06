@@ -57,5 +57,6 @@
         "cwctype": "cpp",
         "optional": "cpp",
         "string_view": "cpp"
-    }
+    },
+    "vscode-corda.isCordaProject": false
 }
